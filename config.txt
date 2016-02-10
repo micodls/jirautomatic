@@ -1,0 +1,18 @@
+# Server
+server = http://jira3.int.net.nokia.com
+
+# Authentication
+username = 
+password = 
+
+# Project
+project = OMCPMNLOMG
+
+# Sprint
+id =
+start =
+end =
+
+# Tasks
+Daily Tasks = [1,2,3]
+Filler Tasks = [4,5,6]
