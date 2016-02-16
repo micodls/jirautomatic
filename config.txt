@@ -14,5 +14,6 @@ start =
 end =
 
 # Tasks
-Daily Tasks = [[OMCPMNLOMG-10, .75], [OMCPMNLOMG-10, .75]]
+Daily Tasks = [[OMCPMNLOMG-1, .75], [OMCPMNLOMG-2, .75]]
+Sprint Tasks = [[OMCPMNLOMG-1, ]]
 Filler Tasks = [4,5,6]
