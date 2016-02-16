@@ -13,15 +13,16 @@ class JiraLogger:
 
     def populate_dict(self):
         print "Fetching data from JIRA server. This may take a while..."
-        issues = self.get_all_issues_for_project("OMCPMNLOMG")
-        issues = self.filter_resolved_and_closed_issues(issues)
+        issues = self.fetch_all_issues_for_project("OMCPMNLOMG")
+        issues = self.__filter_resolved_and_closed_issues(issues)
+        issues = self.__fetch_all_worklogs_for_issues(issues)
         pretty = Formatter()
         print(pretty(issues))
 
-    def get_all_issues_for_project(self, project):
+    def fetch_all_issues_for_project(self, project):
         return self.jira.search_issues("project={}".format(project), maxResults=False)
 
-    def filter_resolved_and_closed_issues(self, issues):
+    def __filter_resolved_and_closed_issues(self, issues):
         filtered_issues = {}
         for issue in issues:
             if not (str(issue.fields.status) == "Resolved" or str(issue.fields.status) == "Closed"):
@@ -35,7 +36,26 @@ class JiraLogger:
                     "subtasks": [subtask.id for subtask in issue.fields.subtasks],
                     "worklogs": [worklog.id for worklog in self.jira.worklogs(issue.id)]
                 }
+
         return filtered_issues
+
+    def __fetch_worklog_details(self, issue_id, worklog_id):
+        worklog = self.jira.worklog(issue_id, worklog_id)
+        return {
+            worklog.id: {
+                "author": worklog.author,
+                "date": worklog.started,
+                "timespent": worklog.timeSpent,
+                "comment": worklog.comment
+            }
+        }
+
+    def __fetch_all_worklogs_for_issues(self, issues):
+        for id, details in issues.items():
+            for worklog in details["worklogs"]:
+                worklog = self.__fetch_worklog_details(id, worklog)
+
+        return issues
 
     def __display_issue(self, issue, tabbing=0):
         tab = "\t" * tabbing
@@ -47,7 +67,7 @@ class JiraLogger:
         print "--------------------------------------------"
 
     def get_all_issue_of_issuetype(self, project, issuetype):
-        for issue in self.get_all_issues_for_project(project):
+        for issue in self.fetch_all_issues_for_project(project):
             if (str(issue.fields.status) == "In Progress" or str(issue.fields.status) == "Reopened" or str(issue.fields.status) == "Open") and str(issue.fields.issuetype) == issuetype:
                 self.__display_issue(issue)
                 if issue.fields.subtasks:
@@ -72,7 +92,7 @@ class JiraLogger:
     def display_worklogs_for_sprint(self, sprint_id):
         sprint_dates = self.__get_start_and_end_date_for_sprint(sprint_id)
         dates = self.__generate_date_list(sprint_dates[0], sprint_dates[1])
-        issues = self.get_all_issues_for_project("OMCPMNLOMG")
+        issues = self.fetch_all_issues_for_project("OMCPMNLOMG")
 
         for date in dates:
             print "Display worklog for {}".format(date)
