@@ -17,6 +17,9 @@ class JiraLogger:
         # issues = self.__fetch_all_issues_for_project("OMCPMNLOMG")
         # issues = self.__filter_resolved_and_closed_issues(issues)
         # issues = self.__fetch_all_worklogs_for_issues(issues)
+        issues = {
+            "a": "Hello"
+        }
         pretty = dict_printer.Prettify()
         print(pretty(issues))
 
