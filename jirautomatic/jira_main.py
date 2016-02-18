@@ -14,15 +14,16 @@ class JiraLogger:
 
     def populate_dict(self):
         print "Fetching data from JIRA server. This may take a while..."
-        # issues = self.fetch_all_issues_for_project("OMCPMNLOMG")
+        # issues = self.__fetch_all_issues_for_project("OMCPMNLOMG")
         # issues = self.__filter_resolved_and_closed_issues(issues)
         # issues = self.__fetch_all_worklogs_for_issues(issues)
         pretty = dict_printer.Prettify()
         print(pretty(issues))
 
-    def fetch_all_issues_for_project(self, project):
+    def __fetch_all_issues_for_project(self, project):
         return self.jira.search_issues("project={}".format(project), maxResults=False)
 
+    # TODO: move formatting to another function
     def __filter_resolved_and_closed_issues(self, issues):
         filtered_issues = {}
         for issue in issues:
@@ -40,6 +41,14 @@ class JiraLogger:
 
         return filtered_issues
 
+    def __fetch_all_worklogs_for_issues(self, issues):
+        for id, details in issues.items():
+            for worklog in details["worklogs"]:
+                worklog = map(self.__fetch_worklog_details, id, worklog)
+
+        return issues
+
+    # TODO: move formatting to another function
     def __fetch_worklog_details(self, issue_id, worklog_id):
         worklog = self.jira.worklog(issue_id, worklog_id)
         return {
@@ -50,50 +59,6 @@ class JiraLogger:
                 "comment": worklog.comment
             }
         }
-
-    def __fetch_all_worklogs_for_issues(self, issues):
-        for id, details in issues.items():
-            for key, value in details.items():
-                if key == "worklogs":
-                    for val in value:
-                        val = self.__fetch_worklog_details(id, val)
-
-        # pretty = pretty_printer()
-        # print(pretty(issues))
-
-        return issues
-
-    def __display_issue(self, issue, tabbing=0):
-        tab = "\t" * tabbing
-        print "{}Id: {}".format(tab, issue.key)
-        print "{}Summary: {}".format(tab, issue.fields.summary)
-        print "{}Assignee: {}".format(tab, issue.fields.assignee)
-        print "{}Reporter: {}".format(tab, issue.fields.reporter)
-        print "{}Status: {}".format(tab, issue.fields.status)
-        print "--------------------------------------------"
-
-    def get_all_issue_of_issuetype(self, project, issuetype):
-        for issue in self.fetch_all_issues_for_project(project):
-            if (str(issue.fields.status) == "In Progress" or str(issue.fields.status) == "Reopened" or str(issue.fields.status) == "Open") and str(issue.fields.issuetype) == issuetype:
-                self.__display_issue(issue)
-                if issue.fields.subtasks:
-                    for subtask in issue.fields.subtasks:
-                        if str(subtask.fields.status) == "In Progress" or str(subtask.fields.status) == "Reopened" or str(subtask.fields.status) == "Open":
-                            self.__display_issue(self.jira.issue(subtask.id), 1)
-
-    def display_issues_for_project(self, project):
-        general_issuetypes = ["Feature", "Improvement"]
-        other_issuetypes = ["Pronto", "Trainings", "General work", "Maintenance"]
-
-        for issuetype in general_issuetypes:
-            print issuetype.upper() + "S"
-            print "--------------------------------------------"
-            self.get_all_issue_of_issuetype(project, issuetype)
-
-        for issuetype in other_issuetypes:
-            print issuetype.upper() + "S"
-            print "--------------------------------------------"
-            self.get_all_issue_of_issuetype(project, issuetype)
 
     def display_worklogs_for_sprint(self, sprint_id):
         sprint_dates = self.__get_start_and_end_date_for_sprint(sprint_id)
@@ -129,7 +94,7 @@ class JiraLogger:
         return dates
 
     def __get_start_and_end_date_for_sprint(self, sprint_id):
-        sprint_date = {
+        sprint_dates = {
             "1602.1": ["2016-01-13", "2016-01-26"],
             "1602.2": ["2016-01-27", "2016-02-16"],
             "1603.1": ["2016-02-17", "2016-03-01"]
@@ -138,4 +103,4 @@ class JiraLogger:
         if sprint_date is None:
             raise RuntimeError("{} is not a proper sprint id.".format(sprint_id))
 
-        return sprint_date
+        return sprint_dates
