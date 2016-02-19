@@ -10,8 +10,6 @@ class JiraLogger:
         self.password = "January@2016"
         self.jira = JIRA(server="http://jira3.int.net.nokia.com", basic_auth=(self.username, self.password));
 
-        # print self.show_worklog_for_issue("OMCPMNLOMG-29")
-        # self.display_worklogs_for_sprint("1602.2")
         self.populate_dict()
 
     def populate_dict(self):
