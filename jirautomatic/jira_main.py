@@ -6,22 +6,26 @@ from jira import JIRA
 class JiraLogger:
     def __init__(self):
         warnings.filterwarnings("ignore") # SNIMissingWarning and InsecurePlatformWarning is printed everytime a query is called. This is just to suppress the warning for a while.
-        # self.jira = JIRA(server="http://jira3.int.net.nokia.com", basic_auth=("pdelos", "January@2016"));
+        self.username = "pdelos"
+        self.password = "January@2016"
+        self.jira = JIRA(server="http://jira3.int.net.nokia.com", basic_auth=(self.username, self.password));
 
         # print self.show_worklog_for_issue("OMCPMNLOMG-29")
         # self.display_worklogs_for_sprint("1602.2")
         self.populate_dict()
 
     def populate_dict(self):
-        print "Fetching data from JIRA server. This may take a while..."
-        # issues = self.__fetch_all_issues_for_project("OMCPMNLOMG")
-        # issues = self.__filter_resolved_and_closed_issues(issues)
-        # issues = self.__fetch_all_worklogs_for_issues(issues)
-        issues = {
-            "a": "Hello"
-        }
+        print "Fetching data from JIRA server. This will take a while..."
+        issues = self.__fetch_all_issues_for_project("OMCPMNLOMG")
+        issues = self.__filter_resolved_and_closed_issues(issues)
+
+        self.__fetch_all_worklogs_for_issues(issues)
+        self.__filter_worklogs_not_for_this_sprint(issues, "1602.2")
+        self.__filter_worklogs_not_from_user(issues)
+
         pretty = dict_printer.Prettify()
-        print(pretty(issues))
+        print pretty(self.__get_total_timespent_per_day_of_sprint(issues, "1602.2"))
+
 
     def __fetch_all_issues_for_project(self, project):
         return self.jira.search_issues("project={}".format(project), maxResults=False)
@@ -45,9 +49,11 @@ class JiraLogger:
         return filtered_issues
 
     def __fetch_all_worklogs_for_issues(self, issues):
-        for id, details in issues.items():
-            for worklog in details["worklogs"]:
-                worklog = map(self.__fetch_worklog_details, id, worklog)
+        for issue_id, issue_details in issues.items():
+            worklogs_list = {}
+            for worklog_id in issue_details["worklogs"]:
+                worklogs_list.update(self.__fetch_worklog_details(issue_id, worklog_id))
+            issue_details["worklogs"] = worklogs_list
 
         return issues
 
@@ -57,33 +63,52 @@ class JiraLogger:
         return {
             worklog.id: {
                 "author": worklog.author,
-                "date": worklog.started,
+                "date": datetime.datetime.strptime(worklog.started[:10], "%Y-%m-%d").strftime("%Y-%m-%d"),
                 "timespent": worklog.timeSpent,
                 "comment": worklog.comment
             }
         }
 
-    def display_worklogs_for_sprint(self, sprint_id):
+    def __filter_worklogs_not_for_this_sprint(self, issues, sprint_id):
         sprint_dates = self.__get_start_and_end_date_for_sprint(sprint_id)
         dates = self.__generate_date_list(sprint_dates[0], sprint_dates[1])
-        issues = self.fetch_all_issues_for_project("OMCPMNLOMG")
+
+        for issue_id, issue_details in issues.items():
+            for worklog_id, worklog_details in issue_details["worklogs"].items():
+                if worklog_details["date"] not in dates:
+                    del issue_details["worklogs"][worklog_id]
+
+    def __filter_worklogs_not_from_user(self, issues):
+        for issue_id, issue_details in issues.items():
+            for worklog_id, worklog_details in issue_details["worklogs"].items():
+                if not worklog_details["author"].name == self.username:
+                     del issue_details["worklogs"][worklog_id]
+
+    def __get_total_timespent_per_day_of_sprint(self, issues, sprint_id):
+        sprint_dates = self.__get_start_and_end_date_for_sprint(sprint_id)
+        dates = self.__generate_date_list(sprint_dates[0], sprint_dates[1])
+        worklogs = {}
 
         for date in dates:
-            print "Display worklog for {}".format(date)
-            print "--------------------------------------------"
-            for issue in issues:
-                self.__display_issue(issue)
-                self.show_worklog_for_issue(issue.key, date)
+            worklogs[date] = []
 
-    def show_worklog_for_issue(self, key, date):
-        for worklog in self.jira.worklogs(key):
-            work = self.jira.worklog(key, worklog.id)
-            if str(work.author.name) == "pdelos" and str(work.started).startswith(date):
-                print "--------------------------------------------"
-                print "| Author: {}".format(work.author)
-                print "| Date: {}".format(work.started)
-                print "| Time Spent: {}".format(work.timeSpent)
-                print "--------------------------------------------"
+        for issue_id, issue_details in issues.items():
+            for worklog_id, worklog_details in issue_details["worklogs"].items():
+                worklogs[worklog_details["date"]].append(worklog_details["timespent"])
+
+        return {d: self.__to_time(sum(map(self.__parse_time, ts))) for d, ts in worklogs.items()}
+
+    def __get_start_and_end_date_for_sprint(self, sprint_id):
+        sprint_dates = {
+            "1602.1": ["2016-01-13", "2016-01-26"],
+            "1602.2": ["2016-01-27", "2016-02-16"],
+            "1603.1": ["2016-02-17", "2016-03-01"]
+        }.get(sprint_id, None)
+
+        if sprint_dates is None:
+            raise RuntimeError("{} is not a proper sprint id.".format(sprint_id))
+
+        return sprint_dates
 
     def __generate_date_list(self, start, end):
         start = datetime.datetime.strptime(start, "%Y-%m-%d")
@@ -96,14 +121,27 @@ class JiraLogger:
 
         return dates
 
-    def __get_start_and_end_date_for_sprint(self, sprint_id):
-        sprint_dates = {
-            "1602.1": ["2016-01-13", "2016-01-26"],
-            "1602.2": ["2016-01-27", "2016-02-16"],
-            "1603.1": ["2016-02-17", "2016-03-01"]
-        }.get(sprint_id, None)
+    def __parse_time(self, s):
+        """ '1h 30m' -> 90 """
+        m = 0
+        for x in s.split():
+            if x.endswith('d'):
+                m += int(x[:-1]) * 60 * 8  # NOTE: 8, not 24
+            elif x.endswith('h'):
+                m += int(x[:-1]) * 60
+            elif x.endswith('m'):
+                m += int(x[:-1])
+        return m
 
-        if sprint_date is None:
-            raise RuntimeError("{} is not a proper sprint id.".format(sprint_id))
-
-        return sprint_dates
+    def __to_time(self, m):
+        """ 90 -> '1h 30m' """
+        # d, m = divmod(m, 60 * 8)  # NOTE: 8, not 24
+        h, m = divmod(m, 60)
+        ret = []
+        # if d:
+        #     ret.append('{}d'.format(d))
+        if h:
+            ret.append('{}h'.format(h))
+        if m:
+            ret.append('{}m'.format(m))
+        return ' '.join(ret) or '0m'
