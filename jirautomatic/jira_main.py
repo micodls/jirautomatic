@@ -2,15 +2,17 @@ import warnings
 import datetime
 from libraries import dict_printer
 from jira import JIRA
+from dateutil import parser
 
 class JiraLogger:
     def __init__(self):
         warnings.filterwarnings("ignore") # SNIMissingWarning and InsecurePlatformWarning is printed everytime a query is called. This is just to suppress the warning for a while.
         self.username = "pdelos"
         self.password = "January@2016"
-        self.jira = JIRA(server="http://jira3.int.net.nokia.com", basic_auth=(self.username, self.password));
+        self.jira = JIRA(server="https://jira3.int.net.nokia.com/", basic_auth=(self.username, self.password));
 
-        self.populate_dict()
+        # self.populate_dict()
+        self.__log_work_for_sprint("1603.1")
 
     def populate_dict(self):
         print "Fetching data from JIRA server. This will take a while..."
@@ -143,3 +145,54 @@ class JiraLogger:
         if m:
             ret.append('{}m'.format(m))
         return ' '.join(ret) or '0m'
+
+    def __log_work_for_sprint(self, sprint_id):
+        sprint_dates = self.__get_start_and_end_date_for_sprint(sprint_id)
+        dates = self.__generate_date_list(sprint_dates[0], sprint_dates[1])
+
+        print "Logging work"
+        self.__log_daily_work(dates)
+
+    def __log_daily_work(self, dates):
+        tasks = [
+            {
+                "id": "OMCPMNLOMG-24",
+                "timeSpent": ".75h",
+                "comment": "Jira"
+            },
+            {
+                "id": "OMCPMNLOMG-27",
+                "timeSpent": ".5h",
+                "comment": ""
+            }
+        ]
+
+        # logging work per task
+        # TODO: check if already logged. Maybe change logging per day instead.
+        # TODO: check if exceeds time
+        for task in tasks:
+            for date in dates:
+                self.jira.add_worklog(task["id"], task["timeSpent"], started=parser.parse(date + "T08:00:00-00:00"), comment=task["comment"])
+
+    def __log_holidays_and_leaves(self):
+        tasks = [
+            {
+                "id": "OMCPMNLOMG-24",
+                "timeSpent": ".75h",
+                "comment": "Jira"
+            },
+            {
+                "id": "OMCPMNLOMG-27",
+                "timeSpent": ".5h",
+                "comment": ""
+            }
+        ]
+
+    def __log_meeting(self):
+        tasks = [
+            {
+                "id": "OMCPMNLOMG-23",
+                "timeSpent": ".75h",
+                "comment": "Jira"
+            },
+        ]
