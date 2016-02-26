@@ -114,7 +114,7 @@ class JiraLogger:
         start = datetime.datetime.strptime(start, "%Y-%m-%d")
         end = datetime.datetime.strptime(end, "%Y-%m-%d")
         dates = []
-        for day in range(0, (end-start).days):
+        for day in range(0, (end-start).days + 1):
             date = start + datetime.timedelta(days=day)
             if date.weekday() not in [5, 6]:
                 dates.append(date.strftime("%Y-%m-%d"))
