@@ -153,10 +153,11 @@ class JiraLogger:
         # TODO: check if already logged. Maybe change logging per day instead.
         # TODO: check if exceeds time. Print warning before actually logging.
         # BUG: remove holidays from date list
-        print "Logging work"
+        print "Logging work."
         # self.__log_daily_work(dates)
         # self.__log_holidays_and_leaves()
         # self.__log_meetings_and_sprint_meetings()
+        # self.__log_trainings()
 
     def __log_daily_work(self, dates):
         tasks = [
@@ -260,3 +261,22 @@ class JiraLogger:
 
         for sprint_meeting in sprint_meetings:
             self.jira.add_worklog(sprint_meeting["id"], sprint_meeting["timeSpent"], started=parser.parse(sprint_meeting["started"] + "T08:00:00-00:00"), comment=sprint_meeting["comment"])
+
+    def __log_trainings(self):
+        trainings = [
+            {
+                "id": "OMCPMNLOMG-152",
+                "timeSpent": "2h",
+                "started": "2016-02-17",
+                "comment": "Troubleshooting Domain Training Part 2"
+            },
+            {
+                "id": "OMCPMNLOMG-152",
+                "timeSpent": "2h",
+                "started": "2016-03-01",
+                "comment": "Troubleshooting Domain Training Part 3"
+            },
+        ]
+
+        for training in trainings:
+            self.jira.add_worklog(training["id"], training["timeSpent"], started=parser.parse(training["started"] + "T08:00:00-00:00"), comment=training["comment"])
