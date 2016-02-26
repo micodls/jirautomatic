@@ -3,7 +3,6 @@
 import platform
 import subprocess
 import shlex
-from jirautomatic import jira_main
 from jirautomatic.libraries import timer
 
 def main():
@@ -12,13 +11,16 @@ def main():
 
     try:
         from jira import JIRA
+        from dateutil import parser
     except ImportError:
         print "Installing dependecies."
         subprocess.call(shlex.split("sudo pip install jira"))
+        subprocess.call(shlex.split("sudo pip install python-dateutil"))
         print "Done."
-
-    with timer.Timer():
-        jira_main.JiraLogger()
+    finally:
+        from jirautomatic import jira_main
+        with timer.Timer():
+            jira_main.JiraLogger()
 
 if __name__ == '__main__':
     main()
