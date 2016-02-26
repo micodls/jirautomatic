@@ -152,10 +152,11 @@ class JiraLogger:
 
         # TODO: check if already logged. Maybe change logging per day instead.
         # TODO: check if exceeds time. Print warning before actually logging.
-        # TODO: remove holidays from date list
+        # BUG: remove holidays from date list
         print "Logging work"
-        self.__log_daily_work(dates)
-        self.__log_holidays_and_leaves()
+        # self.__log_daily_work(dates)
+        # self.__log_holidays_and_leaves()
+        # self.__log_meetings_and_sprint_meetings()
 
     def __log_daily_work(self, dates):
         tasks = [
@@ -192,8 +193,8 @@ class JiraLogger:
             {
                 "id": "OMCPMNLOMG-165",
                 "timeSpent": "8h",
-                "started": "2016-02-26",
-                "comment": "SL/VL"
+                "started": "2016-02-23",
+                "comment": "VL"
             }
         ]
 
@@ -202,3 +203,60 @@ class JiraLogger:
 
         for leave in leaves:
             self.jira.add_worklog(leave["id"], leave["timeSpent"], started=parser.parse(leave["started"] + "T08:00:00-00:00"), comment=leave["comment"])
+
+    def __log_meetings_and_sprint_meetings(self):
+        meetings = [
+            {
+                "id": "OMCPMNLOMG-23",
+                "timeSpent": "1h",
+                "started": "2016-02-26",
+                "comment": "Cloud BTS"
+            },
+            {
+                "id": "OMCPMNLOMG-23",
+                "timeSpent": "1h",
+                "started": "2016-02-18",
+                "comment": "Dimalupig innovation meeting"
+            },
+            {
+                "id": "OMCPMNLOMG-23",
+                "timeSpent": "1h",
+                "started": "2016-02-24",
+                "comment": "CO Community"
+            },
+            {
+                "id": "OMCPMNLOMG-23",
+                "timeSpent": "30m",
+                "started": "2016-02-24",
+                "comment": "Cloud BTS"
+            },
+            {
+                "id": "OMCPMNLOMG-23",
+                "timeSpent": "30m",
+                "started": "2016-02-22",
+                "comment": "SBTS CO Community initial meeting"
+            },
+        ]
+
+        # TODO: sprint planning must always be on first day
+        # TODO: sprint review and retro must always be on last day
+        sprint_meetings = [
+            {
+                "id": "OMCPMNLOMG-20",
+                "timeSpent": "1h",
+                "started": "2016-02-17",
+                "comment": "Sprint Planning"
+            },
+            {
+                "id": "OMCPMNLOMG-20",
+                "timeSpent": "2.5h",
+                "started": "2016-03-01",
+                "comment": "Sprint Review + Sprint Retrospective"
+            },
+        ]
+
+        for meeting in meetings:
+            self.jira.add_worklog(meeting["id"], meeting["timeSpent"], started=parser.parse(meeting["started"] + "T08:00:00-00:00"), comment=meeting["comment"])
+
+        for sprint_meeting in sprint_meetings:
+            self.jira.add_worklog(sprint_meeting["id"], sprint_meeting["timeSpent"], started=parser.parse(sprint_meeting["started"] + "T08:00:00-00:00"), comment=sprint_meeting["comment"])
