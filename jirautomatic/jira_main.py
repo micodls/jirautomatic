@@ -150,8 +150,12 @@ class JiraLogger:
         sprint_dates = self.__get_start_and_end_date_for_sprint(sprint_id)
         dates = self.__generate_date_list(sprint_dates[0], sprint_dates[1])
 
+        # TODO: check if already logged. Maybe change logging per day instead.
+        # TODO: check if exceeds time. Print warning before actually logging.
+        # TODO: remove holidays from date list
         print "Logging work"
         self.__log_daily_work(dates)
+        self.__log_holidays_and_leaves()
 
     def __log_daily_work(self, dates):
         tasks = [
@@ -168,31 +172,33 @@ class JiraLogger:
         ]
 
         # logging work per task
-        # TODO: check if already logged. Maybe change logging per day instead.
-        # TODO: check if exceeds time
         for task in tasks:
             for date in dates:
                 self.jira.add_worklog(task["id"], task["timeSpent"], started=parser.parse(date + "T08:00:00-00:00"), comment=task["comment"])
 
     def __log_holidays_and_leaves(self):
-        tasks = [
+        # TODO: check if date started is in range of current sprint dates
+        # TODO: generate holidays list
+        holidays = [
             {
-                "id": "OMCPMNLOMG-24",
-                "timeSpent": ".75h",
-                "comment": "Jira"
-            },
-            {
-                "id": "OMCPMNLOMG-27",
-                "timeSpent": ".5h",
-                "comment": ""
+                "id": "OMCPMNLOMG-166",
+                "timeSpent": "8h",
+                "started": "2016-02-25",
+                "comment": "People Power Anniversary"
             }
         ]
 
-    def __log_meeting(self):
-        tasks = [
+        leaves = [
             {
-                "id": "OMCPMNLOMG-23",
-                "timeSpent": ".75h",
-                "comment": "Jira"
-            },
+                "id": "OMCPMNLOMG-165",
+                "timeSpent": "8h",
+                "started": "2016-02-26",
+                "comment": "SL/VL"
+            }
         ]
+
+        for holiday in holidays:
+            self.jira.add_worklog(holiday["id"], holiday["timeSpent"], started=parser.parse(holiday["started"] + "T08:00:00-00:00"), comment=holiday["comment"])
+
+        for leave in leaves:
+            self.jira.add_worklog(leave["id"], leave["timeSpent"], started=parser.parse(leave["started"] + "T08:00:00-00:00"), comment=leave["comment"])
