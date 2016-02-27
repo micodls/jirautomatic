@@ -1,6 +1,6 @@
 import warnings
 import datetime
-from libraries import dict_printer
+from libraries import prettify
 from jira import JIRA
 from dateutil import parser
 
@@ -23,7 +23,7 @@ class JiraLogger:
         self.__filter_worklogs_not_for_this_sprint(issues, '1602.2')
         self.__filter_worklogs_not_from_user(issues)
 
-        pretty = dict_printer.Prettify()
+        pretty = prettify.Prettify()
         print pretty(self.__get_total_timespent_per_day_of_sprint(issues, '1602.2'))
 
 
