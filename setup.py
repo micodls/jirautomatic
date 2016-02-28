@@ -9,11 +9,13 @@ def main():
     if platform.python_version() < '2.7':
         raise RuntimeError('Jirautomatic is only supported for Python 2.7 and higher. Please update your version now!')
 
+    # TODO: Check if pip needs upgrade
     try:
         from jira import JIRA
         from dateutil import parser
     except ImportError:
         print 'Installing dependecies.'
+        # TODO: Support for windows
         subprocess.call(shlex.split('sudo pip install jira'))
         subprocess.call(shlex.split('sudo pip install python-dateutil'))
         print 'Done.'
