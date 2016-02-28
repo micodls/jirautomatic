@@ -1,8 +1,9 @@
 import warnings
 import datetime
-from libraries import prettify
 from jira import JIRA
 from dateutil import parser
+from libraries import prettify
+from helpers import helper
 
 class JiraLogger:
 
@@ -104,7 +105,7 @@ class JiraLogger:
                 worklogs[worklog_details['date']].append(worklog_details['timespent'])
 
         # TODO: Rename variables
-        return {d: self.__to_time(sum(map(self.__parse_time, ts))) for d, ts in worklogs.items()}
+        return {d: helper.to_time(sum(map(helper.parse_time, ts))) for d, ts in worklogs.items()}
 
     def __get_start_and_end_date_for_sprint(self, sprint_id):
         sprint_dates = {
