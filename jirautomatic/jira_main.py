@@ -5,10 +5,17 @@ from jira import JIRA
 from dateutil import parser
 
 class JiraLogger:
+
+    self.params = {
+        username = '',
+        password = '',
+        server = 'https://jira3.int.net.nokia.com/',
+        project = 'OMCPMNLOMG'
+        sprint_id = '1603.1'
+    }
+
     def __init__(self):
         warnings.filterwarnings('ignore') # SNIMissingWarning and InsecurePlatformWarning is printed everytime a query is called. This is just to suppress the warning for a while.
-        self.username = 'pdelos'
-        self.password = 'January@2016'
         self.jira = JIRA(server='https://jira3.int.net.nokia.com/', basic_auth=(self.username, self.password));
 
         # self.populate_dict()
@@ -20,11 +27,11 @@ class JiraLogger:
         issues = self.__filter_resolved_and_closed_issues(issues)
 
         self.__fetch_all_worklogs_for_issues(issues)
-        self.__filter_worklogs_not_for_this_sprint(issues, '1602.2')
+        self.__filter_worklogs_not_for_this_sprint(issues, '1603.1')
         self.__filter_worklogs_not_from_user(issues)
 
         pretty = prettify.Prettify()
-        print pretty(self.__get_total_timespent_per_day_of_sprint(issues, '1602.2'))
+        print pretty(self.__get_total_timespent_per_day_of_sprint(issues, '1603.1'))
 
 
     def __fetch_all_issues_for_project(self, project):
@@ -96,6 +103,7 @@ class JiraLogger:
             for worklog_id, worklog_details in issue_details['worklogs'].items():
                 worklogs[worklog_details['date']].append(worklog_details['timespent'])
 
+        # TODO: Rename variables
         return {d: self.__to_time(sum(map(self.__parse_time, ts))) for d, ts in worklogs.items()}
 
     def __get_start_and_end_date_for_sprint(self, sprint_id):
@@ -153,6 +161,7 @@ class JiraLogger:
         # TODO: check if already logged. Maybe change logging per day instead.
         # TODO: check if exceeds time. Print warning before actually logging.
         # BUG: remove holidays from date list
+        # TODO: parse from config file. Properties must always be complete except for daily tasks.
         print 'Logging work.'
         # self.__log_daily_work(dates)
         # self.__log_holidays_and_leaves()
