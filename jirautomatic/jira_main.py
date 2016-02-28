@@ -7,20 +7,21 @@ from helpers import helper
 
 class JiraLogger:
 
-    self.params = {
-        username = '',
-        password = '',
-        server = 'https://jira3.int.net.nokia.com/',
-        project = 'OMCPMNLOMG'
-        sprint_id = '1603.1'
-    }
-
     def __init__(self):
         warnings.filterwarnings('ignore') # SNIMissingWarning and InsecurePlatformWarning is printed everytime a query is called. This is just to suppress the warning for a while.
-        self.jira = JIRA(server='https://jira3.int.net.nokia.com/', basic_auth=(self.username, self.password));
+
+        self.params = {
+            'username': '',
+            'password': '',
+            'server': 'https://jira3.int.net.nokia.com/',
+            'project': 'OMCPMNLOMG',
+            'sprint_id': '1603.1'
+        }
+
+        self.jira = JIRA(server=self.params['server'], basic_auth=(self.params['username'], self.params['password']));
 
         # self.populate_dict()
-        self.__log_work_for_sprint('1603.1')
+        self.__log_work_for_sprint(self.params['sprint_id'])
 
     def populate_dict(self):
         print 'Fetching data from JIRA server. This will take a while...'
