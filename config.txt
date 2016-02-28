@@ -1,19 +1,115 @@
 # Server
 server = http://jira3.int.net.nokia.com
 
+# Project
+project = OMCPMNLOMG
+
 # Authentication
 username = 
 password = 
 
-# Project
-project = OMCPMNLOMG
-
 # Sprint
-id =
-start =
-end =
+sprint_id = 1603.1
 
 # Tasks
-Daily Tasks = [[OMCPMNLOMG-1, .75], [OMCPMNLOMG-2, .75]]
-Sprint Tasks = [[OMCPMNLOMG-1, ]]
-Filler Tasks = [4,5,6]
+# daily
+daily_tasks = [
+    {
+        'id': 'OMCPMNLOMG-24',
+        'timeSpent': '.75h',
+        'comment': 'Jira'
+    },
+    {
+        'id': 'OMCPMNLOMG-27',
+        'timeSpent': '.5h',
+        'comment': ''
+    }
+]
+
+# holidays
+holidays = [
+    {
+        'id': 'OMCPMNLOMG-166',
+        'timeSpent': '8h',
+        'started': '2016-02-25',
+        'comment': 'People Power Anniversary'
+    }
+]
+
+# leaves
+leaves = [
+    {
+        'id': 'OMCPMNLOMG-165',
+        'timeSpent': '8h',
+        'started': '2016-02-23',
+        'comment': 'VL'
+    }
+]
+
+# meetings
+meetings = [
+    {
+        'id': 'OMCPMNLOMG-23',
+        'timeSpent': '1h',
+        'started': '2016-02-26',
+        'comment': 'Cloud BTS'
+    },
+    {
+        'id': 'OMCPMNLOMG-23',
+        'timeSpent': '1h',
+        'started': '2016-02-18',
+        'comment': 'Dimalupig innovation meeting'
+    },
+    {
+        'id': 'OMCPMNLOMG-23',
+        'timeSpent': '1h',
+        'started': '2016-02-24',
+        'comment': 'CO Community'
+    },
+    {
+        'id': 'OMCPMNLOMG-23',
+        'timeSpent': '30m',
+        'started': '2016-02-24',
+        'comment': 'Cloud BTS'
+    },
+    {
+        'id': 'OMCPMNLOMG-23',
+        'timeSpent': '30m',
+        'started': '2016-02-22',
+        'comment': 'SBTS CO Community initial meeting'
+    },
+]
+
+# sprint meetings
+sprint_meetings = [
+    {
+        'id': 'OMCPMNLOMG-20',
+        'timeSpent': '1h',
+        'started': '2016-02-17',
+        'comment': 'Sprint Planning'
+    },
+    {
+        'id': 'OMCPMNLOMG-20',
+        'timeSpent': '2.5h',
+        'started': '2016-03-01',
+        'comment': 'Sprint Review + Sprint Retrospective'
+    },
+]
+
+# trainings
+trainings = [
+    {
+        'id': 'OMCPMNLOMG-152',
+        'timeSpent': '2h',
+        'started': '2016-02-17',
+        'comment': 'Troubleshooting Domain Training Part 2'
+    },
+    {
+        'id': 'OMCPMNLOMG-152',
+        'timeSpent': '2h',
+        'started': '2016-03-01',
+        'comment': 'Troubleshooting Domain Training Part 3'
+    },
+]
+
+# other tasks
