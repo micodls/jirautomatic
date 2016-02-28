@@ -129,31 +129,6 @@ class JiraLogger:
 
         return dates
 
-    def __parse_time(self, s):
-        """ '1h 30m' -> 90 """
-        m = 0
-        for x in s.split():
-            if x.endswith('d'):
-                m += int(x[:-1]) * 60 * 8  # NOTE: 8, not 24
-            elif x.endswith('h'):
-                m += int(x[:-1]) * 60
-            elif x.endswith('m'):
-                m += int(x[:-1])
-        return m
-
-    def __to_time(self, m):
-        """ 90 -> '1h 30m' """
-        # d, m = divmod(m, 60 * 8)  # NOTE: 8, not 24
-        h, m = divmod(m, 60)
-        ret = []
-        # if d:
-        #     ret.append('{}d'.format(d))
-        if h:
-            ret.append('{}h'.format(h))
-        if m:
-            ret.append('{}m'.format(m))
-        return ' '.join(ret) or '0m'
-
     def __log_work_for_sprint(self, sprint_id):
         sprint_dates = self.__get_start_and_end_date_for_sprint(sprint_id)
         dates = self.__generate_date_list(sprint_dates[0], sprint_dates[1])
