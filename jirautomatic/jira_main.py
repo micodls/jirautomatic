@@ -19,22 +19,22 @@ class JiraLogger:
         except JIRAError:
             raise RuntimeError("Something went wrong in connecting to JIRA. Please be sure that your server, username and password are filled in correctly.")
         else:
-            self.__log_work_for_sprint(self.params['sprint_id'])
+            self.__log_work_for_sprint()
 
     def populate_dict(self):
         print 'Fetching data from JIRA server. This will take a while...'
-        issues = self.__fetch_all_issues_for_project('OMCPMNLOMG')
+        issues = self.__fetch_all_issues_for_project()
         issues = self.__filter_resolved_and_closed_issues(issues)
 
         self.__fetch_all_worklogs_for_issues(issues)
-        self.__filter_worklogs_not_for_this_sprint(issues, '1603.1')
+        self.__filter_worklogs_not_for_this_sprint(issues)
         self.__filter_worklogs_not_from_user(issues)
 
         # pretty = prettify.Prettify()
-        # print pretty(self.__get_total_timespent_per_day_of_sprint(issues, '1603.1'))
+        # print pretty(self.__get_total_timespent_per_day_of_sprint(issues))
 
     def __fetch_all_issues_for_project(self, project):
-        return self.jira.search_issues('project={}'.format(project), maxResults=False)
+        return self.jira.search_issues('project={}'.format(self.params['project']), maxResults=False)
 
     # TODO: move formatting to another function
     def __filter_resolved_and_closed_issues(self, issues):
@@ -75,8 +75,8 @@ class JiraLogger:
             }
         }
 
-    def __filter_worklogs_not_for_this_sprint(self, issues, sprint_id):
-        sprint_dates = self.__get_start_and_end_date_for_sprint(sprint_id)
+    def __filter_worklogs_not_for_this_sprint(self, issues):
+        sprint_dates = self.__get_start_and_end_date_for_sprint()
         dates = self.__generate_date_list(sprint_dates[0], sprint_dates[1])
 
         for issue_id, issue_details in issues.items():
@@ -90,8 +90,8 @@ class JiraLogger:
                 if not worklog_details['author'].name == self.username:
                      del issue_details['worklogs'][worklog_id]
 
-    def __get_total_timespent_per_day_of_sprint(self, issues, sprint_id):
-        sprint_dates = self.__get_start_and_end_date_for_sprint(sprint_id)
+    def __get_total_timespent_per_day_of_sprint(self, issues):
+        sprint_dates = self.__get_start_and_end_date_for_sprint()
         dates = self.__generate_date_list(sprint_dates[0], sprint_dates[1])
         worklogs = {}
 
@@ -104,15 +104,15 @@ class JiraLogger:
 
         return {date: helper.to_time(sum(map(helper.parse_time, timespent))) for date, timespent in worklogs.items()}
 
-    def __get_start_and_end_date_for_sprint(self, sprint_id):
+    def __get_start_and_end_date_for_sprint(self):
         sprint_dates = {
             '1602.1': ['2016-01-13', '2016-01-26'],
             '1602.2': ['2016-01-27', '2016-02-16'],
             '1603.1': ['2016-02-17', '2016-03-01']
-        }.get(sprint_id, None)
+        }.get(self.params['sprint_id'], None)
 
         if sprint_dates is None:
-            raise RuntimeError('{} is not a proper sprint id.'.format(sprint_id))
+            raise RuntimeError('{} is not a proper sprint id.'.format(self.params['sprint_id']))
 
         return sprint_dates
 
@@ -136,108 +136,57 @@ class JiraLogger:
 
         return data
 
-    def __log_work_for_sprint(self, sprint_id):
-        sprint_dates = self.__get_start_and_end_date_for_sprint(sprint_id)
+    def __log_work_for_sprint(self):
+        sprint_dates = self.__get_start_and_end_date_for_sprint()
         dates = self.__generate_date_list(sprint_dates[0], sprint_dates[1])
 
         # TODO: check if already logged. Maybe change logging per day instead.
         # TODO: check if exceeds time. Print warning before actually logging.
-        # TODO: parse from config file. Properties must always be complete except for daily tasks.
+
         print 'Logging work.'
-        # self.__log_daily_work(dates)
-        # self.__log_holidays(sprint_dates)
-        # self.__log_leaves()
-        # self.__log_meetings()
-        # self.__log_sprint_meetings(sprint_dates)
-        # self.__log_trainings()
-        # self.__log_reviews()
-        # self.__log_other_tasks()
+        self.__log_daily_work(dates)
+        self.__log_holidays(sprint_dates)
+        self.__log_leaves()
+        self.__log_meetings()
+        self.__log_sprint_meetings(sprint_dates)
+        self.__log_trainings()
+        self.__log_reviews()
+        self.__log_other_tasks()
 
     def __log_daily_work(self, dates):
-        tasks = [
-            {
-                'id': 'OMCPMNLOMG-24',
-                'timeSpent': '45m',
-                'comment': 'Jira'
-            },
-            {
-                'id': 'OMCPMNLOMG-27',
-                'timeSpent': '30m',
-                'comment': ''
-            }
-        ]
-
         # logging work per task
-        for task in tasks:
+        print 'Logging your daily tasks...'
+        for task in self.params['daily_tasks']:
             for date in dates:
                 self.jira.add_worklog(task['id'], task['timeSpent'], started=parser.parse(date + 'T08:00:00-00:00'), comment=task['comment'])
 
     def __log_holidays(self, sprint_dates):
+        print 'Logging holidays...'
         holidays = helper.get_holidays_list()
         for holiday in holidays:
             if sprint_dates[0] <= holiday <= sprint_dates[1]:
                 self.jira.add_worklog(self.params['holidays_id'], '8h', started=parser.parse(holiday + 'T08:00:00-00:00'), comment=holidays[holiday])
 
     def __log_leaves(self):
-        leaves = [
-            {
-                'id': 'OMCPMNLOMG-165',
-                'timeSpent': '8h',
-                'started': '2016-02-23',
-                'comment': 'VL'
-            }
-        ]
-
-        for leave in leaves:
-            self.jira.add_worklog(leave['id'], leave['timeSpent'], started=parser.parse(leave['started'] + 'T08:00:00-00:00'), comment=leave['comment'])
+        # TODO: Support for half day leaves
+        print 'Logging your leaves...'
+        for leave in self.params['leaves']:
+            self.jira.add_worklog(self.params['leaves_id'], '8h', started=parser.parse(leave['started'] + 'T08:00:00-00:00'), comment=leave['comment'])
 
     def __log_meetings(self):
-        meetings = [
-            {
-                'id': 'OMCPMNLOMG-23',
-                'timeSpent': '1h',
-                'started': '2016-02-26',
-                'comment': 'Cloud BTS'
-            },
-            {
-                'id': 'OMCPMNLOMG-23',
-                'timeSpent': '1h',
-                'started': '2016-02-18',
-                'comment': 'Dimalupig innovation meeting'
-            },
-            {
-                'id': 'OMCPMNLOMG-23',
-                'timeSpent': '1h',
-                'started': '2016-02-24',
-                'comment': 'CO Community'
-            },
-            {
-                'id': 'OMCPMNLOMG-23',
-                'timeSpent': '30m',
-                'started': '2016-02-24',
-                'comment': 'Cloud BTS'
-            },
-            {
-                'id': 'OMCPMNLOMG-23',
-                'timeSpent': '30m',
-                'started': '2016-02-22',
-                'comment': 'SBTS CO Community initial meeting'
-            },
-        ]
-
-        for meeting in meetings:
+        print 'Logging your meetings...'
+        for meeting in self.params['meetings']:
             self.jira.add_worklog(meeting['id'], meeting['timeSpent'], started=parser.parse(meeting['started'] + 'T08:00:00-00:00'), comment=meeting['comment'])
 
     def __log_sprint_meetings(self, sprint_dates):
+        print 'Logging your sprint meetings...'
         sprint_meetings = [
             {
-                'id': 'OMCPMNLOMG-20',
                 'timeSpent': '1h',
                 'started': sprint_dates[0],
                 'comment': 'Sprint Planning'
             },
             {
-                'id': 'OMCPMNLOMG-20',
                 'timeSpent': '2.5h',
                 'started': sprint_dates[1],
                 'comment': 'Sprint Review + Sprint Retrospective'
@@ -245,63 +194,18 @@ class JiraLogger:
         ]
 
         for sprint_meeting in sprint_meetings:
-            self.jira.add_worklog(sprint_meeting['id'], sprint_meeting['timeSpent'], started=parser.parse(sprint_meeting['started'] + 'T08:00:00-00:00'), comment=sprint_meeting['comment'])
+            self.jira.add_worklog(self.params['sprint_meetings_id'], sprint_meeting['timeSpent'], started=parser.parse(sprint_meeting['started'] + 'T08:00:00-00:00'), comment=sprint_meeting['comment'])
 
     def __log_trainings(self):
-        trainings = [
-            {
-                'id': 'OMCPMNLOMG-152',
-                'timeSpent': '2h',
-                'started': '2016-02-17',
-                'comment': 'Troubleshooting Domain Training Part 2'
-            },
-            {
-                'id': 'OMCPMNLOMG-152',
-                'timeSpent': '2h',
-                'started': '2016-03-01',
-                'comment': 'Troubleshooting Domain Training Part 3'
-            },
-        ]
-
-        for training in trainings:
+        print 'Logging your trainings...'
+        for training in self.params['trainings']:
             self.jira.add_worklog(training['id'], training['timeSpent'], started=parser.parse(training['started'] + 'T08:00:00-00:00'), comment=training['comment'])
 
     def __log_reviews(self):
         # TODO: Find a way to automate this
-        reviews = {
-            '2016-02-19': [
-                'http://esmz01.emea.nsn-net.net/megazone/nodeoam/merge_requests/4225',
-                'http://esmz01.emea.nsn-net.net/megazone/nodeoam/merge_requests/4227'
-            ],
-            '2016-02-23': [
-                'http://esmz01.emea.nsn-net.net/megazone/nodeoam/merge_requests/3773',
-                'http://esmz01.emea.nsn-net.net/megazone/profile-creator/merge_requests/649',
-                'http://esmz01.emea.nsn-net.net/megazone/nodeoam/merge_requests/4304',
-                'http://esmz01.emea.nsn-net.net/megazone/profile-creator/merge_requests/646',
-                'http://esmz01.emea.nsn-net.net/megazone/siteoam/merge_requests/2561'
-            ],
-            '2016-02-24': [
-                'http://esmz01.emea.nsn-net.net/megazone/bts-web-ui/merge_requests/1182',
-                'http://esmz01.emea.nsn-net.net/megazone/siteoam/merge_requests/2583',
-                'http://esmz01.emea.nsn-net.net/megazone/scf-convert-script/merge_requests/112'
-            ],
-            '2016-02-26': [
-                'http://esmz01.emea.nsn-net.net/megazone/scf-convert-script/merge_requests/117',
-                'http://esmz01.emea.nsn-net.net/megazone/siteoam/merge_requests/2616',
-                'http://esmz01.emea.nsn-net.net/megazone/siteoam/merge_requests/2623/',
-                'http://esmz01.emea.nsn-net.net/megazone/scf-convert-script/merge_requests/118',
-                'http://esmz01.emea.nsn-net.net/megazone/scf-convert-script/merge_requests/120',
-                'http://esmz01.emea.nsn-net.net/megazone/nodeoam/merge_requests/4359',
-                'http://esmz01.emea.nsn-net.net/megazone/profile-creator/merge_requests/664'
-            ],
-            '2016-02-29': [
-                'http://esmz01.emea.nsn-net.net/megazone/scf-convert-script/merge_requests/113',
-                'http://esmz01.emea.nsn-net.net/megazone/nodeoam/merge_requests/4456'
-            ]
-        }
-
-        for review in reviews:
-            self.jira.add_worklog('OMCPMNLOMG-29', '{}h'.format(.5 * len(reviews[review])), started=parser.parse(review + 'T08:00:00-00:00'), comment='\n'.join(reviews[review]))
+        print 'Logging your reviews...'
+        for review in self.params['reviews']:
+            self.jira.add_worklog(self.params('reviews_id'), '{}h'.format(.5 * len(reviews[review])), started=parser.parse(review + 'T08:00:00-00:00'), comment='\n'.join(reviews[review]))
 
     def __log_other_tasks(self):
         # TODO: Make this a filler task function.
