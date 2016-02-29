@@ -24,3 +24,19 @@ def to_time(self, m):
     if m:
         ret.append('{}m'.format(m))
     return ' '.join(ret) or '0m'
+
+def get_holidays_list(self):
+    non_weekend_holidays_for_2016 = {
+        '2016-01-01': 'New Year\'s Day',
+        '2016-02-08': 'Chinese New Year',
+        '2016-02-25': 'People Power Anniversary',
+        '2016-03-24': 'Maundy Thursday',
+        '2016-03-25': 'Good Friday',
+        '2016-08-29': 'National Heroes Day',
+        '2016-10-31': 'Additional special non-working day',
+        '2016-11-01': 'All Saints Day',
+        '2016-11-30': 'Bonifacio Day',
+        '2016-12-30': 'Rizal Day'
+    }
+
+    return non_weekend_holidays_for_2016

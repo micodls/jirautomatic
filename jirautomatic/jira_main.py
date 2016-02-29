@@ -1,6 +1,7 @@
 import warnings
 import datetime
 from jira import JIRA
+from jira.exceptions import JIRAError
 from dateutil import parser
 from libraries import prettify
 from helpers import helper
@@ -18,10 +19,13 @@ class JiraLogger:
             'sprint_id': '1603.1'
         }
 
-        self.jira = JIRA(server=self.params['server'], basic_auth=(self.params['username'], self.params['password']));
-
-        # self.populate_dict()
-        self.__log_work_for_sprint(self.params['sprint_id'])
+        try:
+            self.jira = JIRA(server=self.params['server'], basic_auth=(self.params['username'], self.params['password']));
+        except JIRAError:
+            raise RuntimeError("Something went wrong in connecting to JIRA. Please be sure that your server, username and password are filled in correctly.")
+        else:
+            # self.populate_dict()
+            self.__log_work_for_sprint(self.params['sprint_id'])
 
     def populate_dict(self):
         print 'Fetching data from JIRA server. This will take a while...'
@@ -126,7 +130,7 @@ class JiraLogger:
         dates = []
         for day in range(0, (end-start).days + 1):
             date = start + datetime.timedelta(days=day)
-            if date.weekday() not in [5, 6]:
+            if date.weekday() not in [5, 6] and date.strftime('%Y-%m-%d') not in helper.get_holidays_list().keys():
                 dates.append(date.strftime('%Y-%m-%d'))
 
         return dates
@@ -166,7 +170,6 @@ class JiraLogger:
 
     def __log_holidays_and_leaves(self):
         # TODO: check if date started is in range of current sprint dates
-        # TODO: generate holidays list
         holidays = [
             {
                 'id': 'OMCPMNLOMG-166',
