@@ -1,4 +1,6 @@
 import warnings
+import json
+import re
 from datetime import datetime, timedelta
 from jira import JIRA
 from jira.exceptions import JIRAError
@@ -12,8 +14,8 @@ class JiraLogger:
         warnings.filterwarnings('ignore') # SNIMissingWarning and InsecurePlatformWarning is printed everytime a query is called. This is just to suppress the warning for a while.
 
         self.params = {
-            'username': '',
-            'password': '',
+            'username': 'pdelos',
+            'password': 'January@2016',
             'server': 'https://jira3.int.net.nokia.com/',
             'project': 'OMCPMNLOMG',
             'sprint_id': '1603.1',
@@ -26,6 +28,7 @@ class JiraLogger:
         except JIRAError:
             raise RuntimeError("Something went wrong in connecting to JIRA. Please be sure that your server, username and password are filled in correctly.")
         else:
+            self.params = self.__get_params_from_config()
             self.__log_work_for_sprint(self.params['sprint_id'])
 
     def populate_dict(self):
@@ -39,7 +42,6 @@ class JiraLogger:
 
         # pretty = prettify.Prettify()
         # print pretty(self.__get_total_timespent_per_day_of_sprint(issues, '1603.1'))
-
 
     def __fetch_all_issues_for_project(self, project):
         return self.jira.search_issues('project={}'.format(project), maxResults=False)
@@ -135,6 +137,15 @@ class JiraLogger:
 
         return dates
 
+    def __get_params_from_config(self):
+        with open('config.json') as data_file:
+            try:
+                data = json.load(data_file)
+            except ValueError:
+                raise RuntimeError("There was something wrong in you config.json. Please double check your input.")
+
+        return data
+
     def __log_work_for_sprint(self, sprint_id):
         sprint_dates = self.__get_start_and_end_date_for_sprint(sprint_id)
         dates = self.__generate_date_list(sprint_dates[0], sprint_dates[1])
@@ -143,13 +154,14 @@ class JiraLogger:
         # TODO: check if exceeds time. Print warning before actually logging.
         # TODO: parse from config file. Properties must always be complete except for daily tasks.
         print 'Logging work.'
-        self.__log_daily_work(dates)
-        self.__log_holidays(sprint_dates)
-        self.__log_leaves()
-        self.__log_meetings()
-        self.__log_sprint_meetings(sprint_dates)
-        self.__log_trainings()
-        self.__log_reviews()
+        # self.__log_daily_work(dates)
+        # self.__log_holidays(sprint_dates)
+        # self.__log_leaves()
+        # self.__log_meetings()
+        # self.__log_sprint_meetings(sprint_dates)
+        # self.__log_trainings()
+        # self.__log_reviews()
+        # self.__log_other_tasks()
 
     def __log_daily_work(self, dates):
         tasks = [
@@ -300,3 +312,7 @@ class JiraLogger:
 
         for review in reviews:
             self.jira.add_worklog('OMCPMNLOMG-29', '{}h'.format(.5 * len(reviews[review])), started=parser.parse(review + 'T08:00:00-00:00'), comment='\n'.join(reviews[review]))
+
+    def __log_other_tasks(self):
+        # TODO: Make this a filler task function.
+        print "Not yet supported"
