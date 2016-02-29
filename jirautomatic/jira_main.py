@@ -13,22 +13,12 @@ class JiraLogger:
     def __init__(self):
         warnings.filterwarnings('ignore') # SNIMissingWarning and InsecurePlatformWarning is printed everytime a query is called. This is just to suppress the warning for a while.
 
-        self.params = {
-            'username': 'pdelos',
-            'password': 'January@2016',
-            'server': 'https://jira3.int.net.nokia.com/',
-            'project': 'OMCPMNLOMG',
-            'sprint_id': '1603.1',
-            'holidays_id': 'OMCPMNLOMG-166',
-            'leaves_id': 'OMCPMNLOMG-165'
-        }
-
         try:
+            self.params = self.__get_params_from_config()
             self.jira = JIRA(server=self.params['server'], basic_auth=(self.params['username'], self.params['password']));
         except JIRAError:
             raise RuntimeError("Something went wrong in connecting to JIRA. Please be sure that your server, username and password are filled in correctly.")
         else:
-            self.params = self.__get_params_from_config()
             self.__log_work_for_sprint(self.params['sprint_id'])
 
     def populate_dict(self):
