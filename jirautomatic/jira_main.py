@@ -1,5 +1,5 @@
 import warnings
-import datetime
+from datetime import datetime, timedelta
 from jira import JIRA
 from jira.exceptions import JIRAError
 from dateutil import parser
@@ -16,7 +16,9 @@ class JiraLogger:
             'password': '',
             'server': 'https://jira3.int.net.nokia.com/',
             'project': 'OMCPMNLOMG',
-            'sprint_id': '1603.1'
+            'sprint_id': '1603.1',
+            'holidays_id': 'OMCPMNLOMG-166',
+            'leaves_id': 'OMCPMNLOMG-165'
         }
 
         try:
@@ -76,7 +78,7 @@ class JiraLogger:
         return {
             worklog.id: {
                 'author': worklog.author,
-                'date': datetime.datetime.strptime(worklog.started[:10], '%Y-%m-%d').strftime('%Y-%m-%d'),
+                'date': datetime.strptime(worklog.started[:10], '%Y-%m-%d').strftime('%Y-%m-%d'),
                 'timespent': worklog.timeSpent,
                 'comment': worklog.comment
             }
@@ -109,8 +111,7 @@ class JiraLogger:
             for worklog_id, worklog_details in issue_details['worklogs'].items():
                 worklogs[worklog_details['date']].append(worklog_details['timespent'])
 
-        # TODO: Rename variables
-        return {d: helper.to_time(sum(map(helper.parse_time, ts))) for d, ts in worklogs.items()}
+        return {date: helper.to_time(sum(map(helper.parse_time, timespent))) for date, timespent in worklogs.items()}
 
     def __get_start_and_end_date_for_sprint(self, sprint_id):
         sprint_dates = {
@@ -125,11 +126,11 @@ class JiraLogger:
         return sprint_dates
 
     def __generate_date_list(self, start, end):
-        start = datetime.datetime.strptime(start, '%Y-%m-%d')
-        end = datetime.datetime.strptime(end, '%Y-%m-%d')
+        start = datetime.strptime(start, '%Y-%m-%d')
+        end = datetime.strptime(end, '%Y-%m-%d')
         dates = []
         for day in range(0, (end-start).days + 1):
-            date = start + datetime.timedelta(days=day)
+            date = start + timedelta(days=day)
             if date.weekday() not in [5, 6] and date.strftime('%Y-%m-%d') not in helper.get_holidays_list().keys():
                 dates.append(date.strftime('%Y-%m-%d'))
 
@@ -145,7 +146,8 @@ class JiraLogger:
         # TODO: parse from config file. Properties must always be complete except for daily tasks.
         print 'Logging work.'
         # self.__log_daily_work(dates)
-        # self.__log_holidays_and_leaves()
+        # self.__log_holidays(sprint_dates)
+        # self.__log_leaves()
         # self.__log_meetings_and_sprint_meetings()
         # self.__log_trainings()
 
@@ -168,17 +170,13 @@ class JiraLogger:
             for date in dates:
                 self.jira.add_worklog(task['id'], task['timeSpent'], started=parser.parse(date + 'T08:00:00-00:00'), comment=task['comment'])
 
-    def __log_holidays_and_leaves(self):
-        # TODO: check if date started is in range of current sprint dates
-        holidays = [
-            {
-                'id': 'OMCPMNLOMG-166',
-                'timeSpent': '8h',
-                'started': '2016-02-25',
-                'comment': 'People Power Anniversary'
-            }
-        ]
+    def __log_holidays(self, sprint_dates):
+        holidays = helper.get_holidays_list()
+        for holiday in holidays:
+            if sprint_dates[0] <= holiday <= sprint_dates[1]:
+                self.jira.add_worklog(self.params['holidays_id'], '8h', started=parser.parse(holiday + 'T08:00:00-00:00'), comment=holidays[holiday])
 
+    def __log_leaves(self):
         leaves = [
             {
                 'id': 'OMCPMNLOMG-165',
@@ -187,9 +185,6 @@ class JiraLogger:
                 'comment': 'VL'
             }
         ]
-
-        for holiday in holidays:
-            self.jira.add_worklog(holiday['id'], holiday['timeSpent'], started=parser.parse(holiday['started'] + 'T08:00:00-00:00'), comment=holiday['comment'])
 
         for leave in leaves:
             self.jira.add_worklog(leave['id'], leave['timeSpent'], started=parser.parse(leave['started'] + 'T08:00:00-00:00'), comment=leave['comment'])

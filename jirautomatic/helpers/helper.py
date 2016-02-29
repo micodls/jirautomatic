@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-def parse_time(self, s):
+def parse_time(s):
     """ '1h 30m' -> 90 """
     m = 0
     for x in s.split():
@@ -12,7 +12,7 @@ def parse_time(self, s):
             m += int(x[:-1])
     return m
 
-def to_time(self, m):
+def to_time(m):
     """ 90 -> '1h 30m' """
     # d, m = divmod(m, 60 * 8)  # NOTE: 8, not 24
     h, m = divmod(m, 60)
@@ -25,7 +25,7 @@ def to_time(self, m):
         ret.append('{}m'.format(m))
     return ' '.join(ret) or '0m'
 
-def get_holidays_list(self):
+def get_holidays_list():
     non_weekend_holidays_for_2016 = {
         '2016-01-01': 'New Year\'s Day',
         '2016-02-08': 'Chinese New Year',
