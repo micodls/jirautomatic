@@ -26,7 +26,6 @@ class JiraLogger:
         except JIRAError:
             raise RuntimeError("Something went wrong in connecting to JIRA. Please be sure that your server, username and password are filled in correctly.")
         else:
-            # self.populate_dict()
             self.__log_work_for_sprint(self.params['sprint_id'])
 
     def populate_dict(self):
@@ -38,8 +37,8 @@ class JiraLogger:
         self.__filter_worklogs_not_for_this_sprint(issues, '1603.1')
         self.__filter_worklogs_not_from_user(issues)
 
-        pretty = prettify.Prettify()
-        print pretty(self.__get_total_timespent_per_day_of_sprint(issues, '1603.1'))
+        # pretty = prettify.Prettify()
+        # print pretty(self.__get_total_timespent_per_day_of_sprint(issues, '1603.1'))
 
 
     def __fetch_all_issues_for_project(self, project):
@@ -148,7 +147,8 @@ class JiraLogger:
         # self.__log_daily_work(dates)
         # self.__log_holidays(sprint_dates)
         # self.__log_leaves()
-        # self.__log_meetings_and_sprint_meetings()
+        # self.__log_meetings()
+        self.__log_sprint_meetings(sprint_dates)
         # self.__log_trainings()
 
     def __log_daily_work(self, dates):
@@ -189,7 +189,7 @@ class JiraLogger:
         for leave in leaves:
             self.jira.add_worklog(leave['id'], leave['timeSpent'], started=parser.parse(leave['started'] + 'T08:00:00-00:00'), comment=leave['comment'])
 
-    def __log_meetings_and_sprint_meetings(self):
+    def __log_meetings(self):
         meetings = [
             {
                 'id': 'OMCPMNLOMG-23',
@@ -223,25 +223,24 @@ class JiraLogger:
             },
         ]
 
-        # TODO: sprint planning must always be on first day
-        # TODO: sprint review and retro must always be on last day
+        for meeting in meetings:
+            self.jira.add_worklog(meeting['id'], meeting['timeSpent'], started=parser.parse(meeting['started'] + 'T08:00:00-00:00'), comment=meeting['comment'])
+
+    def __log_sprint_meetings(self, sprint_dates):
         sprint_meetings = [
             {
                 'id': 'OMCPMNLOMG-20',
                 'timeSpent': '1h',
-                'started': '2016-02-17',
+                'started': sprint_dates[0],
                 'comment': 'Sprint Planning'
             },
             {
                 'id': 'OMCPMNLOMG-20',
                 'timeSpent': '2.5h',
-                'started': '2016-03-01',
+                'started': sprint_dates[1],
                 'comment': 'Sprint Review + Sprint Retrospective'
             },
         ]
-
-        for meeting in meetings:
-            self.jira.add_worklog(meeting['id'], meeting['timeSpent'], started=parser.parse(meeting['started'] + 'T08:00:00-00:00'), comment=meeting['comment'])
 
         for sprint_meeting in sprint_meetings:
             self.jira.add_worklog(sprint_meeting['id'], sprint_meeting['timeSpent'], started=parser.parse(sprint_meeting['started'] + 'T08:00:00-00:00'), comment=sprint_meeting['comment'])
