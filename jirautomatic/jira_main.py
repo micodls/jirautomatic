@@ -141,26 +141,26 @@ class JiraLogger:
 
         # TODO: check if already logged. Maybe change logging per day instead.
         # TODO: check if exceeds time. Print warning before actually logging.
-        # BUG: remove holidays from date list
         # TODO: parse from config file. Properties must always be complete except for daily tasks.
         print 'Logging work.'
-        # self.__log_daily_work(dates)
-        # self.__log_holidays(sprint_dates)
-        # self.__log_leaves()
-        # self.__log_meetings()
+        self.__log_daily_work(dates)
+        self.__log_holidays(sprint_dates)
+        self.__log_leaves()
+        self.__log_meetings()
         self.__log_sprint_meetings(sprint_dates)
-        # self.__log_trainings()
+        self.__log_trainings()
+        self.__log_reviews()
 
     def __log_daily_work(self, dates):
         tasks = [
             {
                 'id': 'OMCPMNLOMG-24',
-                'timeSpent': '.75h',
+                'timeSpent': '45m',
                 'comment': 'Jira'
             },
             {
                 'id': 'OMCPMNLOMG-27',
-                'timeSpent': '.5h',
+                'timeSpent': '30m',
                 'comment': ''
             }
         ]
@@ -263,3 +263,40 @@ class JiraLogger:
 
         for training in trainings:
             self.jira.add_worklog(training['id'], training['timeSpent'], started=parser.parse(training['started'] + 'T08:00:00-00:00'), comment=training['comment'])
+
+    def __log_reviews(self):
+        # TODO: Find a way to automate this
+        reviews = {
+            '2016-02-19': [
+                'http://esmz01.emea.nsn-net.net/megazone/nodeoam/merge_requests/4225',
+                'http://esmz01.emea.nsn-net.net/megazone/nodeoam/merge_requests/4227'
+            ],
+            '2016-02-23': [
+                'http://esmz01.emea.nsn-net.net/megazone/nodeoam/merge_requests/3773',
+                'http://esmz01.emea.nsn-net.net/megazone/profile-creator/merge_requests/649',
+                'http://esmz01.emea.nsn-net.net/megazone/nodeoam/merge_requests/4304',
+                'http://esmz01.emea.nsn-net.net/megazone/profile-creator/merge_requests/646',
+                'http://esmz01.emea.nsn-net.net/megazone/siteoam/merge_requests/2561'
+            ],
+            '2016-02-24': [
+                'http://esmz01.emea.nsn-net.net/megazone/bts-web-ui/merge_requests/1182',
+                'http://esmz01.emea.nsn-net.net/megazone/siteoam/merge_requests/2583',
+                'http://esmz01.emea.nsn-net.net/megazone/scf-convert-script/merge_requests/112'
+            ],
+            '2016-02-26': [
+                'http://esmz01.emea.nsn-net.net/megazone/scf-convert-script/merge_requests/117',
+                'http://esmz01.emea.nsn-net.net/megazone/siteoam/merge_requests/2616',
+                'http://esmz01.emea.nsn-net.net/megazone/siteoam/merge_requests/2623/',
+                'http://esmz01.emea.nsn-net.net/megazone/scf-convert-script/merge_requests/118',
+                'http://esmz01.emea.nsn-net.net/megazone/scf-convert-script/merge_requests/120',
+                'http://esmz01.emea.nsn-net.net/megazone/nodeoam/merge_requests/4359',
+                'http://esmz01.emea.nsn-net.net/megazone/profile-creator/merge_requests/664'
+            ],
+            '2016-02-29': [
+                'http://esmz01.emea.nsn-net.net/megazone/scf-convert-script/merge_requests/113',
+                'http://esmz01.emea.nsn-net.net/megazone/nodeoam/merge_requests/4456'
+            ]
+        }
+
+        for review in reviews:
+            self.jira.add_worklog('OMCPMNLOMG-29', '{}h'.format(.5 * len(reviews[review])), started=parser.parse(review + 'T08:00:00-00:00'), comment='\n'.join(reviews[review]))
