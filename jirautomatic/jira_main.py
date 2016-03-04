@@ -153,29 +153,37 @@ class JiraLogger:
         self.__log_reviews()
         self.__log_other_tasks()
 
-    def __log_daily_work(self, dates):
-        print 'Logging your daily tasks...'
-        for task in self.params['daily_tasks']:
-            for date in dates:
-                self.jira.add_worklog(task['id'], task['timeSpent'], started=parser.parse(date + 'T08:00:00-00:00'), comment=task['comment'])
-
     def __log_holidays(self, sprint_dates):
-        print 'Logging holidays...'
         holidays = helper.get_holidays_list()
+        print 'Logging holidays...'
         for holiday in holidays:
             if sprint_dates[0] <= holiday <= sprint_dates[1]:
-                self.jira.add_worklog(self.params['holidays_id'], '8h', started=parser.parse(holiday + 'T08:00:00-00:00'), comment=holidays[holiday])
+                worklog = self.jira.add_worklog(self.params['holidays_id'], '8h', started=parser.parse(holiday + 'T08:00:00-00:00'), comment=holidays[holiday])
+                if not isinstance(worklog, int):
+                    raise RuntimeError('There was a problem logging your holidays.')
 
     def __log_leaves(self):
         # TODO: Support for half day leaves
         print 'Logging your leaves...'
         for leave in self.params['leaves']:
-            self.jira.add_worklog(self.params['leaves_id'], '8h', started=parser.parse(leave['started'] + 'T08:00:00-00:00'), comment=leave['comment'])
+            worklog = self.jira.add_worklog(self.params['leaves_id'], '8h', started=parser.parse(leave['started'] + 'T08:00:00-00:00'), comment=leave['comment'])
+            if not isinstance(worklog, int):
+                raise RuntimeError('There was a problem logging your leaves.')
+
+    def __log_daily_work(self, dates):
+        print 'Logging your daily tasks...'
+        for task in self.params['daily_tasks']:
+            for date in dates:
+                worklog = self.jira.add_worklog(task['id'], task['timeSpent'], started=parser.parse(date + 'T08:00:00-00:00'), comment=task['comment'])
+                if not isinstance(worklog, int):
+                    raise RuntimeError('There was a problem logging your daily work.')
 
     def __log_meetings(self):
         print 'Logging your meetings...'
         for meeting in self.params['meetings']:
-            self.jira.add_worklog(meeting['id'], meeting['timeSpent'], started=parser.parse(meeting['started'] + 'T08:00:00-00:00'), comment=meeting['comment'])
+            worklog = self.jira.add_worklog(meeting['id'], meeting['timeSpent'], started=parser.parse(meeting['started'] + 'T08:00:00-00:00'), comment=meeting['comment'])
+            if not isinstance(worklog, int):
+                raise RuntimeError('There was a problem logging your meetings.')
 
     def __log_sprint_meetings(self, sprint_dates):
         print 'Logging your sprint meetings...'
@@ -193,18 +201,24 @@ class JiraLogger:
         ]
 
         for sprint_meeting in sprint_meetings:
-            self.jira.add_worklog(self.params['sprint_meetings_id'], sprint_meeting['timeSpent'], started=parser.parse(sprint_meeting['started'] + 'T08:00:00-00:00'), comment=sprint_meeting['comment'])
+            worklog = worklog = self.jira.add_worklog(self.params['sprint_meetings_id'], sprint_meeting['timeSpent'], started=parser.parse(sprint_meeting['started'] + 'T08:00:00-00:00'), comment=sprint_meeting['comment'])
+            if not isinstance(worklog, int):
+                raise RuntimeError('There was a problem logging your sprint meetings.')
 
     def __log_trainings(self):
         print 'Logging your trainings...'
         for training in self.params['trainings']:
-            self.jira.add_worklog(training['id'], training['timeSpent'], started=parser.parse(training['started'] + 'T08:00:00-00:00'), comment=training['comment'])
+            worklog = self.jira.add_worklog(training['id'], training['timeSpent'], started=parser.parse(training['started'] + 'T08:00:00-00:00'), comment=training['comment'])
+            if not isinstance(worklog, int):
+                raise RuntimeError('There was a problem logging your trainings.')
 
     def __log_reviews(self):
         # TODO: Find a way to automate this
         print 'Logging your reviews...'
         for review in self.params['reviews']:
-            self.jira.add_worklog(self.params('reviews_id'), '{}h'.format(.5 * len(reviews[review])), started=parser.parse(review + 'T08:00:00-00:00'), comment='\n'.join(reviews[review]))
+            worklog = self.jira.add_worklog(self.params('reviews_id'), '{}h'.format(.5 * len(reviews[review])), started=parser.parse(review + 'T08:00:00-00:00'), comment='\n'.join(reviews[review]))
+            if not isinstance(worklog, int):
+                raise RuntimeError('There was a problem logging your reviews.')
 
     def __log_other_tasks(self):
         # TODO: Make this a filler task function.
