@@ -144,9 +144,9 @@ class JiraLogger:
         # TODO: check if exceeds time. Print warning before actually logging.
 
         print 'Logging work.'
-        self.__log_daily_work(dates)
         self.__log_holidays(sprint_dates)
         self.__log_leaves()
+        self.__log_daily_work(dates)
         self.__log_meetings()
         self.__log_sprint_meetings(sprint_dates)
         self.__log_trainings()
@@ -154,7 +154,6 @@ class JiraLogger:
         self.__log_other_tasks()
 
     def __log_daily_work(self, dates):
-        # logging work per task
         print 'Logging your daily tasks...'
         for task in self.params['daily_tasks']:
             for date in dates:
