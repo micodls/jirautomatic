@@ -108,7 +108,9 @@ class JiraLogger:
         sprint_dates = {
             '1602.1': ['2016-01-13', '2016-01-26'],
             '1602.2': ['2016-01-27', '2016-02-16'],
-            '1603.1': ['2016-02-17', '2016-03-01']
+            '1603.1': ['2016-02-17', '2016-03-01'],
+            '1603.2': ['2016-03-02', '2016-03-15'],
+            '1604.1': ['2016-03-16', '2016-03-29']
         }.get(self.params['sprint_id'], None)
 
         if sprint_dates is None:
@@ -148,10 +150,10 @@ class JiraLogger:
         self.__log_leaves()
         self.__log_daily_work(dates)
         self.__log_meetings()
-        self.__log_sprint_meetings(sprint_dates)
-        self.__log_trainings()
-        self.__log_reviews()
-        self.__log_other_tasks()
+        # self.__log_sprint_meetings(sprint_dates)
+        # self.__log_trainings()
+        # self.__log_reviews()
+        # self.__log_other_tasks()
 
     def __log_holidays(self, sprint_dates):
         holidays = helper.get_holidays_list()
@@ -167,6 +169,7 @@ class JiraLogger:
         print 'Logging your leaves...'
         for leave in self.params['leaves']:
             worklog = self.jira.add_worklog(self.params['leaves_id'], '8h', started=parser.parse(leave['started'] + 'T08:00:00-00:00'), comment=leave['comment'])
+            print worklog
             if not isinstance(worklog, int):
                 raise RuntimeError('There was a problem logging your leaves.')
 
