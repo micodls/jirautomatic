@@ -1,11 +1,10 @@
 {
     "server": "http://jira3.int.net.nokia.com",
     "project": "OMCPMNLOMG",
-    "username": "",
-    "password": "",
+    "username": "pdelos",
+    "password": "January@2016",
     "sprint_id": "1603.2",
-    "holidays_id": "OMCPMNLOMG-166",
-    "leaves_id": "OMCPMNLOMG-165",
+    "holidays_id": "OMCPMNLOMG-176",
     "sprint_meetings_id": "OMCPMNLOMG-20",
     "reviews_id": "OMCPMNLOMG-29",
     "daily_tasks": [
@@ -22,7 +21,15 @@
     ],
     "leaves": [
         {
-            "started": "2016-02-23",
+            "id": "OMCPMNLOMG-174",
+            "timeSpent": "8h",
+            "started": "2016-03-02",
+            "comment": "SL"
+        },
+        {
+            "id": "OMCPMNLOMG-174",
+            "timeSpent": "8h",
+            "started": "2016-03-08",
             "comment": "VL"
         }
     ],
@@ -30,33 +37,23 @@
         {
             "id": "OMCPMNLOMG-23",
             "timeSpent": "1h",
-            "started": "2016-02-26",
-            "comment": "Cloud BTS"
-        },
-        {
-            "id": "OMCPMNLOMG-23",
-            "timeSpent": "1h",
-            "started": "2016-02-18",
-            "comment": "Dimalupig innovation meeting"
-        },
-        {
-            "id": "OMCPMNLOMG-23",
-            "timeSpent": "1h",
-            "started": "2016-02-24",
-            "comment": "CO Community"
-        },
-        {
-            "id": "OMCPMNLOMG-23",
-            "timeSpent": "30m",
-            "started": "2016-02-24",
-            "comment": "Cloud BTS"
-        },
-        {
-            "id": "OMCPMNLOMG-23",
-            "timeSpent": "30m",
-            "started": "2016-02-22",
-            "comment": "SBTS CO Community initial meeting"
+            "started": "2016-03-04",
+            "comment": "innovation meeting"
         }
+    ],
+    "sprint_meetings": [
+        {
+            "id": "OMCPMNLOMG-20",
+            "timeSpent": "1h",
+            // "started": sprint_dates[0],
+            "comment": "Sprint Planning"
+        },
+        {
+            "id": "OMCPMNLOMG-20",
+            "timeSpent": "2.5h",
+            // "started": sprint_dates[1],
+            "comment": "Sprint Review + Sprint Retrospective"
+        },
     ],
     "trainings": [
         {

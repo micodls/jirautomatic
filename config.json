@@ -3,11 +3,8 @@
     "project": "",
     "username": "",
     "password": "",
-    "sprint_id": "",
+    "hours_per_sprint": "",
     "holidays_id": "",
-    "leaves_id": "",
-    "sprint_meetings_id": "",
-    "reviews_id": "",
     "daily_tasks": [
     ],
     "leaves": [
@@ -16,6 +13,6 @@
     ],
     "trainings": [
     ],
-    "reviews": {
-    }
+    "reviews": [
+    ]
 }

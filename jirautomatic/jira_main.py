@@ -150,10 +150,10 @@ class JiraLogger:
         self.__log_leaves()
         self.__log_daily_work(dates)
         self.__log_meetings()
-        # self.__log_sprint_meetings(sprint_dates)
-        # self.__log_trainings()
-        # self.__log_reviews()
-        # self.__log_other_tasks()
+        self.__log_sprint_meetings(sprint_dates)
+        self.__log_trainings()
+        self.__log_reviews()
+        self.__log_other_tasks()
 
     def __log_holidays(self, sprint_dates):
         holidays = helper.get_holidays_list()
@@ -165,10 +165,10 @@ class JiraLogger:
                     raise RuntimeError('There was a problem logging your holidays.')
 
     def __log_leaves(self):
-        # TODO: Support for half day leaves
+        # TODO: Support for not whole day leaves
         print 'Logging your leaves...'
         for leave in self.params['leaves']:
-            worklog = self.jira.add_worklog(self.params['leaves_id'], '8h', started=parser.parse(leave['started'] + 'T08:00:00-00:00'), comment=leave['comment'])
+            worklog = self.jira.add_worklog(leave['id'], leave['timeSpent'], started=parser.parse(leave['started'] + 'T08:00:00-00:00'), comment=leave['comment'])
             print worklog
             if not isinstance(worklog, int):
                 raise RuntimeError('There was a problem logging your leaves.')
@@ -190,21 +190,8 @@ class JiraLogger:
 
     def __log_sprint_meetings(self, sprint_dates):
         print 'Logging your sprint meetings...'
-        sprint_meetings = [
-            {
-                'timeSpent': '1h',
-                'started': sprint_dates[0],
-                'comment': 'Sprint Planning'
-            },
-            {
-                'timeSpent': '2.5h',
-                'started': sprint_dates[1],
-                'comment': 'Sprint Review + Sprint Retrospective'
-            },
-        ]
-
-        for sprint_meeting in sprint_meetings:
-            worklog = worklog = self.jira.add_worklog(self.params['sprint_meetings_id'], sprint_meeting['timeSpent'], started=parser.parse(sprint_meeting['started'] + 'T08:00:00-00:00'), comment=sprint_meeting['comment'])
+        for sprint_meeting in self.params['sprint_meetings']:
+            worklog = worklog = self.jira.add_worklog(sprint_meeting['id'], sprint_meeting['timeSpent'], started=parser.parse(sprint_meeting['started'] + 'T08:00:00-00:00'), comment=sprint_meeting['comment'])
             if not isinstance(worklog, int):
                 raise RuntimeError('There was a problem logging your sprint meetings.')
 
