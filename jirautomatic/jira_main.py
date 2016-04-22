@@ -19,7 +19,8 @@ class JiraLogger:
         except JIRAError:
             raise RuntimeError("Something went wrong in connecting to JIRA. Please be sure that your server, username and password are filled in correctly.")
         else:
-            self.__log_work_for_sprint()
+            # self.__log_work_for_sprint()
+            self.populate_dict()
 
     def populate_dict(self):
         print 'Fetching data from JIRA server. This will take a while...'
@@ -33,7 +34,7 @@ class JiraLogger:
         # pretty = prettify.Prettify()
         # print pretty(self.__get_total_timespent_per_day_of_sprint(issues))
 
-    def __fetch_all_issues_for_project(self, project):
+    def __fetch_all_issues_for_project(self):
         return self.jira.search_issues('project={}'.format(self.params['project']), maxResults=False)
 
     # TODO: move formatting to another function
@@ -104,13 +105,16 @@ class JiraLogger:
 
         return {date: helper.to_time(sum(map(helper.parse_time, timespent))) for date, timespent in worklogs.items()}
 
+    # REMOVE: FRONTEND
     def __get_start_and_end_date_for_sprint(self):
         sprint_dates = {
             '1602.1': ['2016-01-13', '2016-01-26'],
             '1602.2': ['2016-01-27', '2016-02-16'],
             '1603.1': ['2016-02-17', '2016-03-01'],
             '1603.2': ['2016-03-02', '2016-03-15'],
-            '1604.1': ['2016-03-16', '2016-03-29']
+            '1604.1': ['2016-03-16', '2016-04-05'],
+            '1604.2': ['2016-04-05', '2016-04-19'],
+            '1605.1': ['2016-04-20', '2016-05-03']
         }.get(self.params['sprint_id'], None)
 
         if sprint_dates is None:
@@ -130,7 +134,7 @@ class JiraLogger:
         return dates
 
     def __get_params_from_config(self):
-        with open('config.json') as data_file:
+        with open('sample.json') as data_file:
             try:
                 data = json.load(data_file)
             except ValueError:
@@ -146,14 +150,14 @@ class JiraLogger:
         # TODO: check if exceeds time. Print warning before actually logging.
 
         print 'Logging work.'
-        self.__log_holidays(sprint_dates)
-        self.__log_leaves()
+        # self.__log_holidays(sprint_dates)
+        # self.__log_leaves()
         self.__log_daily_work(dates)
-        self.__log_meetings()
-        self.__log_sprint_meetings(sprint_dates)
-        self.__log_trainings()
-        self.__log_reviews()
-        self.__log_other_tasks()
+        # self.__log_meetings()
+        # self.__log_sprint_meetings(sprint_dates)
+        # self.__log_trainings()
+        # self.__log_reviews()
+        # self.__log_other_tasks()
 
     def __log_holidays(self, sprint_dates):
         holidays = helper.get_holidays_list()
