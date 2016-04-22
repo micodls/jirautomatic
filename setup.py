@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import platform
+import pip
 import subprocess
 import shlex
 from jirautomatic.libraries import timer
@@ -15,9 +16,12 @@ def main():
         from dateutil import parser
     except ImportError:
         print 'Installing dependecies.'
-        # TODO: Support for windows
-        subprocess.call(shlex.split('sudo pip install jira'))
-        subprocess.call(shlex.split('sudo pip install python-dateutil'))
+        if platform.system() == 'Linux':
+            subprocess.call(shlex.split('sudo pip install --upgrade jira'))
+            subprocess.call(shlex.split('sudo pip install --upgrade python-dateutil'))
+        elif platform.system() == 'Windows' or platform.system() == 'cli':
+            pip.main(['install', '--upgrade', 'jira'])
+            pip.main(['install', '--upgrade', 'python-dateutil'])
         print 'Done.'
     finally:
         from jirautomatic import jira_main
