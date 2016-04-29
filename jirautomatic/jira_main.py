@@ -10,32 +10,63 @@ from helpers import helper
 
 class JiraLogger:
 
-    def __init__(self):
+    def __init__(self, username, password, sprint_id, project):
         warnings.filterwarnings('ignore') # SNIMissingWarning and InsecurePlatformWarning is printed everytime a query is called. This is just to suppress the warning for a while.
+
+        self.username = username
+        self.sprint_id = sprint_id
+        self.project = project
 
         try:
             self.params = self.__get_params_from_config()
-            self.jira = JIRA(server=self.params['server'], basic_auth=(self.params['username'], self.params['password']));
+            self.jira = JIRA(server=self.params['server'], basic_auth=(self.username, password))
         except JIRAError:
-            raise RuntimeError("Something went wrong in connecting to JIRA. Please be sure that your server, username and password are filled in correctly.")
+            raise RuntimeError("Something went wrong in connecting to JIRA. Please be sure that your server, username and password are correct.")
         else:
-            # self.__log_work_for_sprint()
-            self.populate_dict()
+            self.create_input_json()
+            # self.fetch_and_filter_data_from_jira()
 
-    def populate_dict(self):
+    def create_input_json(self):
+        sprint_dates = self.__get_start_and_end_date_for_sprint()
+        data = {
+            "sprint_start": sprint_dates[0],
+            "sprint_end": sprint_dates[1],
+        }
+
+        with open('input.json', 'w') as outfile:
+            json.dump(data, outfile)
+
+    def fetch_and_filter_data_from_jira(self):
         print 'Fetching data from JIRA server. This will take a while...'
         issues = self.__fetch_all_issues_for_project()
         issues = self.__filter_resolved_and_closed_issues(issues)
-
+        self.__filter_issues_not_for_sprint(issues)
         self.__fetch_all_worklogs_for_issues(issues)
         self.__filter_worklogs_not_for_this_sprint(issues)
         self.__filter_worklogs_not_from_user(issues)
+
+        print issues
 
         # pretty = prettify.Prettify()
         # print pretty(self.__get_total_timespent_per_day_of_sprint(issues))
 
     def __fetch_all_issues_for_project(self):
-        return self.jira.search_issues('project={}'.format(self.params['project']), maxResults=False)
+        try:
+            return self.jira.search_issues('project={}'.format(self.project), maxResults=False)
+        except JIRAError:
+            raise RuntimeError("Project is invalid or undefined.")
+
+    def __get_sprint_id(self, sprint_details):
+        if sprint_details == None:
+            return 'No active sprint'
+
+        for sprint_detail in sprint_details:
+            sprint_detail = re.search('\[.*', str(sprint_detail)).group(0).split(',')
+            for index, item in enumerate(sprint_detail):
+                if item.startswith('state=ACTIVE'):
+                     return re.search('[\d\.]+', sprint_detail[index + 1]).group(0)
+
+        return 'No active sprint'
 
     # TODO: move formatting to another function
     def __filter_resolved_and_closed_issues(self, issues):
@@ -49,11 +80,17 @@ class JiraLogger:
                     'reporter': issue.fields.reporter,
                     'status': issue.fields.status.name,
                     'issuetype': issue.fields.issuetype.name,
+                    'sprint': self.__get_sprint_id(issue.fields.customfield_11990),
                     'subtasks': [subtask.id for subtask in issue.fields.subtasks],
                     'worklogs': [worklog.id for worklog in self.jira.worklogs(issue.id)]
                 }
 
         return filtered_issues
+
+    def __filter_issues_not_for_sprint(self, issues):
+        for issue_id, issue_details in issues.items():
+            if issue_details['sprint'] != self.sprint_id:
+                del issues[issue_id]
 
     def __fetch_all_worklogs_for_issues(self, issues):
         for issue_id, issue_details in issues.items():
@@ -105,7 +142,6 @@ class JiraLogger:
 
         return {date: helper.to_time(sum(map(helper.parse_time, timespent))) for date, timespent in worklogs.items()}
 
-    # REMOVE: FRONTEND
     def __get_start_and_end_date_for_sprint(self):
         sprint_dates = {
             '1602.1': ['2016-01-13', '2016-01-26'],
@@ -115,10 +151,10 @@ class JiraLogger:
             '1604.1': ['2016-03-16', '2016-04-05'],
             '1604.2': ['2016-04-05', '2016-04-19'],
             '1605.1': ['2016-04-20', '2016-05-03']
-        }.get(self.params['sprint_id'], None)
+        }.get(self.sprint_id, None)
 
         if sprint_dates is None:
-            raise RuntimeError('{} is not a proper sprint id.'.format(self.params['sprint_id']))
+            raise RuntimeError('{} is not a proper sprint id.'.format(self.sprint_id))
 
         return sprint_dates
 
