@@ -134,11 +134,11 @@ class JiraLogger:
         return dates
 
     def __get_params_from_config(self):
-        with open('sample.json') as data_file:
+        with open('config.json') as data_file:
             try:
                 data = json.load(data_file)
             except ValueError:
-                raise RuntimeError("There was something wrong in you config.json. Please double check your input.")
+                raise RuntimeError("There was something wrong in your config.json.")
 
         return data
 
@@ -159,61 +159,8 @@ class JiraLogger:
         # self.__log_reviews()
         # self.__log_other_tasks()
 
-    def __log_holidays(self, sprint_dates):
-        holidays = helper.get_holidays_list()
-        print 'Logging holidays...'
-        for holiday in holidays:
-            if sprint_dates[0] <= holiday <= sprint_dates[1]:
-                worklog = self.jira.add_worklog(self.params['holidays_id'], '8h', started=parser.parse(holiday + 'T08:00:00-00:00'), comment=holidays[holiday])
-                if not isinstance(worklog, int):
-                    raise RuntimeError('There was a problem logging your holidays.')
-
-    def __log_leaves(self):
-        # TODO: Support for not whole day leaves
-        print 'Logging your leaves...'
-        for leave in self.params['leaves']:
-            worklog = self.jira.add_worklog(leave['id'], leave['timeSpent'], started=parser.parse(leave['started'] + 'T08:00:00-00:00'), comment=leave['comment'])
-            print worklog
+    def __generic_logger(self):
+        for worklog in worklogs:
+            worklog = self.jira.add_worklog(worklog['id'], worklog['timeSpent'], started=parser.parse(worklog['started'] + 'T08:00:00-00:00'), comment=worklog['comment'])
             if not isinstance(worklog, int):
-                raise RuntimeError('There was a problem logging your leaves.')
-
-    def __log_daily_work(self, dates):
-        print 'Logging your daily tasks...'
-        for task in self.params['daily_tasks']:
-            for date in dates:
-                worklog = self.jira.add_worklog(task['id'], task['timeSpent'], started=parser.parse(date + 'T08:00:00-00:00'), comment=task['comment'])
-                if not isinstance(worklog, int):
-                    raise RuntimeError('There was a problem logging your daily work.')
-
-    def __log_meetings(self):
-        print 'Logging your meetings...'
-        for meeting in self.params['meetings']:
-            worklog = self.jira.add_worklog(meeting['id'], meeting['timeSpent'], started=parser.parse(meeting['started'] + 'T08:00:00-00:00'), comment=meeting['comment'])
-            if not isinstance(worklog, int):
-                raise RuntimeError('There was a problem logging your meetings.')
-
-    def __log_sprint_meetings(self, sprint_dates):
-        print 'Logging your sprint meetings...'
-        for sprint_meeting in self.params['sprint_meetings']:
-            worklog = worklog = self.jira.add_worklog(sprint_meeting['id'], sprint_meeting['timeSpent'], started=parser.parse(sprint_meeting['started'] + 'T08:00:00-00:00'), comment=sprint_meeting['comment'])
-            if not isinstance(worklog, int):
-                raise RuntimeError('There was a problem logging your sprint meetings.')
-
-    def __log_trainings(self):
-        print 'Logging your trainings...'
-        for training in self.params['trainings']:
-            worklog = self.jira.add_worklog(training['id'], training['timeSpent'], started=parser.parse(training['started'] + 'T08:00:00-00:00'), comment=training['comment'])
-            if not isinstance(worklog, int):
-                raise RuntimeError('There was a problem logging your trainings.')
-
-    def __log_reviews(self):
-        # TODO: Find a way to automate this
-        print 'Logging your reviews...'
-        for review in self.params['reviews']:
-            worklog = self.jira.add_worklog(self.params('reviews_id'), '{}h'.format(.5 * len(reviews[review])), started=parser.parse(review + 'T08:00:00-00:00'), comment='\n'.join(reviews[review]))
-            if not isinstance(worklog, int):
-                raise RuntimeError('There was a problem logging your reviews.')
-
-    def __log_other_tasks(self):
-        # TODO: Make this a filler task function.
-        print "Not yet supported"
+                raise RuntimeError('There was a problem logging your holidays.')
