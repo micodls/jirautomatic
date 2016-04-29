@@ -26,7 +26,7 @@ def main():
     finally:
         from jirautomatic import jira_main
         with timer.Timer():
-            jira_main.JiraLogger()
+            jira_main.JiraLogger('pdelos', 'March@2016', '1605.1', 'OMCPMNLOMG')
 
 if __name__ == '__main__':
     main()
