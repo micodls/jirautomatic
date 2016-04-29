@@ -4,6 +4,7 @@ import platform
 import pip
 import subprocess
 import shlex
+import sys
 from jirautomatic.libraries import timer
 
 def main():
@@ -19,14 +20,18 @@ def main():
         if platform.system() == 'Linux':
             subprocess.call(shlex.split('sudo pip install --upgrade jira'))
             subprocess.call(shlex.split('sudo pip install --upgrade python-dateutil'))
-        elif platform.system() == 'Windows' or platform.system() == 'cli':
-            pip.main(['install', '--upgrade', 'jira'])
-            pip.main(['install', '--upgrade', 'python-dateutil'])
+        elif platform.system() == 'Windows':
+            pass
+            # pip.main(['install', '--upgrade', 'jira'])
+            # pip.main(['install', '--upgrade', 'python-dateutil'])
         print 'Done.'
     finally:
         from jirautomatic import jira_main
         with timer.Timer():
-            jira_main.JiraLogger('pdelos', 'March@2016', '1605.1', 'OMCPMNLOMG')
+            if platform.system() == 'Linux':
+                jira_main.JiraLogger(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
+            elif platform.system() == 'Windows':
+                jira_main.JiraLogger(sys.argv[0], sys.argv[1], sys.argv[2], sys.argv[3])
 
 if __name__ == '__main__':
     main()
