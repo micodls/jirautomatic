@@ -24,31 +24,30 @@ class JiraLogger:
             raise RuntimeError("Something went wrong in connecting to JIRA. Please be sure that your server, username and password are correct.")
         else:
             self.create_input_json()
-            # self.fetch_and_filter_data_from_jira()
 
     def create_input_json(self):
         sprint_dates = self.__get_start_and_end_date_for_sprint()
         data = {
             "sprint_start": sprint_dates[0],
             "sprint_end": sprint_dates[1],
+            "issues": self.__fetch_and_filter_data_from_jira()
         }
 
-        with open('input.json', 'w') as outfile:
+        with open('{}_{}.json'.format(self.username, self.sprint_id), 'w') as outfile:
             json.dump(data, outfile)
 
-    def fetch_and_filter_data_from_jira(self):
+    def __fetch_and_filter_data_from_jira(self):
         print 'Fetching data from JIRA server. This will take a while...'
         issues = self.__fetch_all_issues_for_project()
         issues = self.__filter_resolved_and_closed_issues(issues)
         self.__filter_issues_not_for_sprint(issues)
-        self.__fetch_all_worklogs_for_issues(issues)
-        self.__filter_worklogs_not_for_this_sprint(issues)
-        self.__filter_worklogs_not_from_user(issues)
-
-        print issues
-
+        # self.__fetch_all_worklogs_for_issues(issues)
+        # self.__filter_worklogs_not_for_this_sprint(issues)
+        # self.__filter_worklogs_not_from_user(issues)
         # pretty = prettify.Prettify()
         # print pretty(self.__get_total_timespent_per_day_of_sprint(issues))
+
+        return issues
 
     def __fetch_all_issues_for_project(self):
         try:
@@ -56,19 +55,6 @@ class JiraLogger:
         except JIRAError:
             raise RuntimeError("Project is invalid or undefined.")
 
-    def __get_sprint_id(self, sprint_details):
-        if sprint_details == None:
-            return 'No active sprint'
-
-        for sprint_detail in sprint_details:
-            sprint_detail = re.search('\[.*', str(sprint_detail)).group(0).split(',')
-            for index, item in enumerate(sprint_detail):
-                if item.startswith('state=ACTIVE'):
-                     return re.search('[\d\.]+', sprint_detail[index + 1]).group(0)
-
-        return 'No active sprint'
-
-    # TODO: move formatting to another function
     def __filter_resolved_and_closed_issues(self, issues):
         filtered_issues = {}
         for issue in issues:
@@ -76,13 +62,13 @@ class JiraLogger:
                 filtered_issues[issue.id] = {
                     'key': issue.key,
                     'summary': issue.fields.summary,
-                    'assignee': issue.fields.assignee,
-                    'reporter': issue.fields.reporter,
+                    'assignee': 'None' if issue.fields.assignee is None else issue.fields.assignee.name,
+                    'reporter': issue.fields.reporter.name,
                     'status': issue.fields.status.name,
                     'issuetype': issue.fields.issuetype.name,
                     'sprint': self.__get_sprint_id(issue.fields.customfield_11990),
-                    'subtasks': [subtask.id for subtask in issue.fields.subtasks],
-                    'worklogs': [worklog.id for worklog in self.jira.worklogs(issue.id)]
+                    'subtasks': [subtask.id for subtask in issue.fields.subtasks]
+                    # 'worklogs': [worklog.id for worklog in self.jira.worklogs(issue.id)]
                 }
 
         return filtered_issues
@@ -101,7 +87,6 @@ class JiraLogger:
 
         return issues
 
-    # TODO: move formatting to another function
     def __fetch_worklog_details(self, issue_id, worklog_id):
         worklog = self.jira.worklog(issue_id, worklog_id)
         return {
@@ -178,24 +163,28 @@ class JiraLogger:
 
         return data
 
-    def __log_work_for_sprint(self):
-        sprint_dates = self.__get_start_and_end_date_for_sprint()
-        dates = self.__generate_date_list(sprint_dates[0], sprint_dates[1])
+    def __get_sprint_id(self, sprint_details):
+        if sprint_details == None:
+            return 'No active sprint'
 
-        # TODO: check if already logged. Maybe change logging per day instead.
-        # TODO: check if exceeds time. Print warning before actually logging.
+        for sprint_detail in sprint_details:
+            sprint_detail = re.search('\[.*', str(sprint_detail)).group(0).split(',')
+            for index, item in enumerate(sprint_detail):
+                if item.startswith('state=ACTIVE'):
+                     return re.search('[\d\.]+', sprint_detail[index + 1]).group(0)
 
+        return 'No active sprint'
+
+    def log_work_for_sprint(self, file):
         print 'Logging work.'
-        # self.__log_holidays(sprint_dates)
-        # self.__log_leaves()
-        self.__log_daily_work(dates)
-        # self.__log_meetings()
-        # self.__log_sprint_meetings(sprint_dates)
-        # self.__log_trainings()
-        # self.__log_reviews()
-        # self.__log_other_tasks()
 
-    def __generic_logger(self):
+        with open(file) as data_file:
+            try:
+                self.__generic_logger(json.load(data_file))
+            except ValueError:
+                raise RuntimeError("There was something wrong in your {}.json." + file)
+
+    def __generic_logger(self, worklogs):
         for worklog in worklogs:
             worklog = self.jira.add_worklog(worklog['id'], worklog['timeSpent'], started=parser.parse(worklog['started'] + 'T08:00:00-00:00'), comment=worklog['comment'])
             if not isinstance(worklog, int):
