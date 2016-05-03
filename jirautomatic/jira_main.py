@@ -5,7 +5,6 @@ from datetime import datetime, timedelta
 from jira import JIRA
 from jira.exceptions import JIRAError
 from dateutil import parser
-from libraries import prettify
 from helpers import helper
 
 class JiraLogger:
@@ -23,6 +22,7 @@ class JiraLogger:
         except JIRAError:
             raise RuntimeError("Something went wrong in connecting to JIRA. Please be sure that your server, username and password are correct.")
         else:
+            # self.__test_if_add_worklog_works()
             self.create_input_json()
 
     def create_input_json(self):
@@ -41,11 +41,6 @@ class JiraLogger:
         issues = self.__fetch_all_issues_for_project()
         issues = self.__filter_resolved_and_closed_issues(issues)
         self.__filter_issues_not_for_sprint(issues)
-        # self.__fetch_all_worklogs_for_issues(issues)
-        # self.__filter_worklogs_not_for_this_sprint(issues)
-        # self.__filter_worklogs_not_from_user(issues)
-        # pretty = prettify.Prettify()
-        # print pretty(self.__get_total_timespent_per_day_of_sprint(issues))
 
         return issues
 
@@ -68,7 +63,6 @@ class JiraLogger:
                     'issuetype': issue.fields.issuetype.name,
                     'sprint': self.__get_sprint_id(issue.fields.customfield_11990),
                     'subtasks': [subtask.id for subtask in issue.fields.subtasks]
-                    # 'worklogs': [worklog.id for worklog in self.jira.worklogs(issue.id)]
                 }
 
         return filtered_issues
@@ -86,46 +80,6 @@ class JiraLogger:
             issue_details['worklogs'] = worklogs_list
 
         return issues
-
-    def __fetch_worklog_details(self, issue_id, worklog_id):
-        worklog = self.jira.worklog(issue_id, worklog_id)
-        return {
-            worklog.id: {
-                'author': worklog.author,
-                'date': datetime.strptime(worklog.started[:10], '%Y-%m-%d').strftime('%Y-%m-%d'),
-                'timespent': worklog.timeSpent,
-                'comment': worklog.comment
-            }
-        }
-
-    def __filter_worklogs_not_for_this_sprint(self, issues):
-        sprint_dates = self.__get_start_and_end_date_for_sprint()
-        dates = self.__generate_date_list(sprint_dates[0], sprint_dates[1])
-
-        for issue_id, issue_details in issues.items():
-            for worklog_id, worklog_details in issue_details['worklogs'].items():
-                if worklog_details['date'] not in dates:
-                    del issue_details['worklogs'][worklog_id]
-
-    def __filter_worklogs_not_from_user(self, issues):
-        for issue_id, issue_details in issues.items():
-            for worklog_id, worklog_details in issue_details['worklogs'].items():
-                if not worklog_details['author'].name == self.username:
-                     del issue_details['worklogs'][worklog_id]
-
-    def __get_total_timespent_per_day_of_sprint(self, issues):
-        sprint_dates = self.__get_start_and_end_date_for_sprint()
-        dates = self.__generate_date_list(sprint_dates[0], sprint_dates[1])
-        worklogs = {}
-
-        for date in dates:
-            worklogs[date] = []
-
-        for issue_id, issue_details in issues.items():
-            for worklog_id, worklog_details in issue_details['worklogs'].items():
-                worklogs[worklog_details['date']].append(worklog_details['timespent'])
-
-        return {date: helper.to_time(sum(map(helper.parse_time, timespent))) for date, timespent in worklogs.items()}
 
     def __get_start_and_end_date_for_sprint(self):
         sprint_dates = {
@@ -189,3 +143,11 @@ class JiraLogger:
             worklog = self.jira.add_worklog(worklog['id'], worklog['timeSpent'], started=parser.parse(worklog['started'] + 'T08:00:00-00:00'), comment=worklog['comment'])
             if not isinstance(worklog, int):
                 raise RuntimeError('There was a problem logging your holidays.')
+
+    def __test_if_add_worklog_works(self):
+        worklog = self.jira.add_worklog('OMCPMNLOMG-24', '.75h', started=parser.parse('2016-04-26T08:00:00-00:00'), comment='JIRA')
+        print worklog
+
+        while not isinstance(worklog, int):
+            worklog = self.jira.add_worklog('OMCPMNLOMG-24', '.75h', started=parser.parse('2016-05-03T08:00:00-00:00'), comment='JIRA')
+            print worklog
