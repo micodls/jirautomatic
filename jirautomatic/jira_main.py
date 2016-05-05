@@ -36,7 +36,7 @@ class JiraLogger:
         }
 
         with open('{}_{}.json'.format(self.username, self.sprint_id), 'w') as outfile:
-            json.dump(data, outfile)
+            json.dump(data, outfile, sort_keys=True, indent=4)
 
     def __fetch_and_filter_data_from_jira(self):
         print 'Fetching data from JIRA server. This will take a while...'
