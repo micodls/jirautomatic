@@ -1,4 +1,5 @@
 import warnings
+import requests
 import json
 import re
 from datetime import datetime, timedelta
@@ -13,12 +14,13 @@ class JiraLogger:
         warnings.filterwarnings('ignore') # SNIMissingWarning and InsecurePlatformWarning is printed everytime a query is called. This is just to suppress the warning for a while.
 
         self.username = username
+        self.password = password
         self.sprint_id = sprint_id
         self.project = project
 
         try:
             self.params = self.__get_params_from_config()
-            self.jira = JIRA(server=self.params['server'], basic_auth=(self.username, password))
+            self.jira = JIRA(server=self.params['server'], basic_auth=(self.username, self.password))
         except JIRAError:
             raise RuntimeError("Something went wrong in connecting to JIRA. Please be sure that your server, username and password are correct.")
         else:
@@ -40,7 +42,9 @@ class JiraLogger:
         print 'Fetching data from JIRA server. This will take a while...'
         issues = self.__fetch_all_issues_for_project()
         issues = self.__filter_resolved_and_closed_issues(issues)
-        self.__filter_issues_not_for_sprint(issues)
+        self.__filter_issues_not_for_current_sprint(issues)
+        self.__fetch_all_worklogs_for_issues(issues)
+        self.__filter_worklogs_not_for_current_sprint(issues)
 
         return issues
 
@@ -62,24 +66,55 @@ class JiraLogger:
                     'status': issue.fields.status.name,
                     'issuetype': issue.fields.issuetype.name,
                     'sprint': self.__get_sprint_id(issue.fields.customfield_11990),
-                    'subtasks': [subtask.id for subtask in issue.fields.subtasks]
+                    'subtasks': [subtask.id for subtask in issue.fields.subtasks],
+                    'worklogs': {}
                 }
 
         return filtered_issues
 
-    def __filter_issues_not_for_sprint(self, issues):
+    def __filter_issues_not_for_current_sprint(self, issues):
         for issue_id, issue_details in issues.items():
             if issue_details['sprint'] != self.sprint_id:
                 del issues[issue_id]
 
     def __fetch_all_worklogs_for_issues(self, issues):
         for issue_id, issue_details in issues.items():
-            worklogs_list = {}
-            for worklog_id in issue_details['worklogs']:
-                worklogs_list.update(self.__fetch_worklog_details(issue_id, worklog_id))
-            issue_details['worklogs'] = worklogs_list
+            raw_issue = self.jira.issue(issue_id).raw
+            if raw_issue['fields']['worklog']['total'] > 20:
+                r = requests.get("{}/rest/api/latest/issue/{}/worklog".format(self.params['server'], issue_id), auth=(self.username, self.password))
+                if r.status_code == 200:
+                    for worklog in r.json()['worklogs']:
+                        issue_details['worklogs'].update({
+                            worklog['id']: {
+                                'author': worklog['author']['name'],
+                                'started': worklog['started'],
+                                'timeSpent': worklog['timeSpent'],
+                                'comment': worklog['comment']
+                            }
+                        })
+                else:
+                    raise RuntimeError('There was something wrong with getting the worklogs for {}'.format(issue_id))
+            else:
+                for worklog in raw_issue['fields']['worklog']['worklogs']:
+                    issue_details['worklogs'].update({
+                        worklog['id']: {
+                            'author': worklog['author']['name'],
+                            'started': worklog['started'],
+                            'timeSpent': worklog['timeSpent'],
+                            'comment': worklog['comment']
+                        }
+                    })
 
         return issues
+
+    def __filter_worklogs_not_for_current_sprint(self, issues):
+        sprint_dates = self.__get_start_and_end_date_for_sprint()
+        dates = self.__generate_date_list(sprint_dates[0], sprint_dates[1])
+
+        for issue_id, issue_details in issues.items():
+            for worklog_id, worklog_details in issue_details['worklogs'].items():
+                if re.match('\d{4}-\d{2}-\d{2}', worklog_details['started']).group(0) not in dates:
+                    del issue_details['worklogs'][worklog_id]
 
     def __get_start_and_end_date_for_sprint(self):
         sprint_dates = {
@@ -89,7 +124,9 @@ class JiraLogger:
             '1603.2': ['2016-03-02', '2016-03-15'],
             '1604.1': ['2016-03-16', '2016-04-05'],
             '1604.2': ['2016-04-05', '2016-04-19'],
-            '1605.1': ['2016-04-20', '2016-05-03']
+            '1605.1': ['2016-04-20', '2016-05-03'],
+            '1605.2': ['2016-05-04', '2016-05-17'],
+            '1606.1': ['2016-05-18', '2016-05-31']
         }.get(self.sprint_id, None)
 
         if sprint_dates is None:
