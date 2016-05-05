@@ -2,6 +2,7 @@ import warnings
 import requests
 import json
 import re
+import os
 from datetime import datetime, timedelta
 from jira import JIRA
 from jira.exceptions import JIRAError
@@ -35,7 +36,7 @@ class JiraLogger:
             "issues": self.__fetch_and_filter_data_from_jira()
         }
 
-        with open('{}_{}.json'.format(self.username, self.sprint_id), 'w') as outfile:
+        with open(os.path.join(os.path.dirname(os.path.dirname(__file__)), '{}_{}.json'.format(self.username, self.sprint_id)), 'w') as outfile:
             json.dump(data, outfile, sort_keys=True, indent=4)
 
     def __fetch_and_filter_data_from_jira(self):
@@ -45,6 +46,7 @@ class JiraLogger:
         self.__filter_issues_not_for_current_sprint(issues)
         self.__fetch_all_worklogs_for_issues(issues)
         self.__filter_worklogs_not_for_current_sprint(issues)
+        self.__filter_worklogs_not_for_current_user(issues)
 
         return issues
 
@@ -116,6 +118,12 @@ class JiraLogger:
                 if re.match('\d{4}-\d{2}-\d{2}', worklog_details['started']).group(0) not in dates:
                     del issue_details['worklogs'][worklog_id]
 
+    def __filter_worklogs_not_for_current_user(self, issues):
+        for issue_id, issue_details in issues.items():
+            for worklog_id, worklog_details in issue_details['worklogs'].items():
+                if not worklog_details['author'] == self.username:
+                     del issue_details['worklogs'][worklog_id]
+
     def __get_start_and_end_date_for_sprint(self):
         sprint_dates = {
             '1602.1': ['2016-01-13', '2016-01-26'],
@@ -146,7 +154,7 @@ class JiraLogger:
         return dates
 
     def __get_params_from_config(self):
-        with open('config.json') as data_file:
+        with open(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'config.json')) as data_file:
             try:
                 data = json.load(data_file)
             except ValueError:

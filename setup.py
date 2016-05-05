@@ -30,10 +30,7 @@ def main():
     finally:
         from jirautomatic import jira_main
         with timer.Timer():
-            if platform.system() == 'Linux':
-                jira_main.JiraLogger(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
-            elif platform.system() == 'Windows':
-                jira_main.JiraLogger(sys.argv[0], sys.argv[1], sys.argv[2], sys.argv[3])
+            jira_main.JiraLogger(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
 
 if __name__ == '__main__':
     main()
