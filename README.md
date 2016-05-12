@@ -51,7 +51,7 @@
   * Generic sprint date generation. Currently, it is hard coded. Someone should always update the `holidays list` and `start and end sprint dates` located in `jirautomatic/helpers`
 
 ## Others
-  [Frontend][frontend]
+  * [Frontend][frontend]
   
 [pythonjira]: https://pypi.python.org/pypi/jira/
 [dateutil]: https://labix.org/python-dateutil
