@@ -1,5 +1,4 @@
 # Jirautomatic
-========================
   The backend for an automated JIRA work logger that can be customized based on your needs.
   
   The inspiration for this was because our own JIRA is very slow. Rather than opening modals and new tabs, a better looking frontend and working backend was made to save the time of the engineers. Spend less time navigating thru JIRA and more time coding.
