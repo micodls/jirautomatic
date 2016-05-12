@@ -1,29 +1,15 @@
 #!/usr/bin/env python
 
-def parse_time(s):
-    """ '1h 30m' -> 90 """
-    m = 0
-    for x in s.split():
-        if x.endswith('d'):
-            m += int(x[:-1]) * 60 * 8  # NOTE: 8, not 24
-        elif x.endswith('h'):
-            m += int(x[:-1]) * 60
-        elif x.endswith('m'):
-            m += int(x[:-1])
-    return m
+def generate_date_list(start, end):
+    start = datetime.strptime(start, '%Y-%m-%d')
+    end = datetime.strptime(end, '%Y-%m-%d')
+    dates = []
+    for day in range(0, (end-start).days + 1):
+        date = start + timedelta(days=day)
+        if date.weekday() not in [5, 6] and date.strftime('%Y-%m-%d') not in get_holidays_list().keys():
+            dates.append(date.strftime('%Y-%m-%d'))
 
-def to_time(m):
-    """ 90 -> '1h 30m' """
-    # d, m = divmod(m, 60 * 8)  # NOTE: 8, not 24
-    h, m = divmod(m, 60)
-    ret = []
-    # if d:
-    #     ret.append('{}d'.format(d))
-    if h:
-        ret.append('{}h'.format(h))
-    if m:
-        ret.append('{}m'.format(m))
-    return ' '.join(ret) or '0m'
+    return dates
 
 def get_holidays_list():
     non_weekend_holidays_for_2016 = {
@@ -40,3 +26,21 @@ def get_holidays_list():
     }
 
     return non_weekend_holidays_for_2016
+
+def get_start_and_end_date_for_sprint(sprint_id):
+    sprint_dates = {
+        '1602.1': ['2016-01-13', '2016-01-26'],
+        '1602.2': ['2016-01-27', '2016-02-16'],
+        '1603.1': ['2016-02-17', '2016-03-01'],
+        '1603.2': ['2016-03-02', '2016-03-15'],
+        '1604.1': ['2016-03-16', '2016-04-05'],
+        '1604.2': ['2016-04-05', '2016-04-19'],
+        '1605.1': ['2016-04-20', '2016-05-03'],
+        '1605.2': ['2016-05-04', '2016-05-17'],
+        '1606.1': ['2016-05-18', '2016-05-31']
+    }.get(sprint_id, None)
+
+    if sprint_dates is None:
+        raise RuntimeError('{} is not a proper sprint id.'.format(sprint_id))
+
+    return sprint_dates

@@ -10,7 +10,6 @@ from dateutil import parser
 from helpers import helper
 
 class JiraLogger:
-
     def __init__(self, username, password):
         warnings.filterwarnings('ignore') # SNIMissingWarning and InsecurePlatformWarning is printed everytime a query is called. This is just to suppress the warning for a while.
 
@@ -19,6 +18,15 @@ class JiraLogger:
         self.params['password'] = password
 
         self.__connect_to_jira()
+
+    def __get_params_from_config(self):
+        with open(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'config.json')) as data_file:
+            try:
+                data = json.load(data_file)
+            except ValueError:
+                raise RuntimeError("There was something wrong in your config.json.")
+
+        return data
 
     def __connect_to_jira(self):
         print 'Connecting to JIRA.'
@@ -33,7 +41,7 @@ class JiraLogger:
         self.params['sprint_id'] = sprint_id
         self.params['project'] = project
 
-        sprint_dates = self.__get_start_and_end_date_for_sprint()
+        sprint_dates = helper.get_start_and_end_date_for_sprint(self.params['sprint_id'])
         data = {
             "sprint_start": sprint_dates[0],
             "sprint_end": sprint_dates[1],
@@ -81,6 +89,18 @@ class JiraLogger:
             }
 
         return formatted_issues
+
+    def __get_sprint_id(self, sprint_details):
+        if sprint_details == None:
+            return 'No active sprint'
+
+        for sprint_detail in sprint_details:
+            sprint_detail = re.search('\[.*', str(sprint_detail)).group(0).split(',')
+            for index, item in enumerate(sprint_detail):
+                if item.startswith('state=ACTIVE'):
+                     return re.search('[\d\.]+', sprint_detail[index + 1]).group(0)
+
+        return 'No active sprint'
 
     def __filter_resolved_and_closed_issues(self, issues):
         print 'Removing closed and resolved issues.'
@@ -131,8 +151,8 @@ class JiraLogger:
 
     def __filter_worklogs_not_for_current_sprint(self, issues):
         print 'Removing issues not for sprint {}'.format(self.params['sprint_id'])
-        sprint_dates = self.__get_start_and_end_date_for_sprint()
-        dates = self.__generate_date_list(sprint_dates[0], sprint_dates[1])
+        sprint_dates = helper.get_start_and_end_date_for_sprint(self.params['sprint_id'])
+        dates = helper.generate_date_list(sprint_dates[0], sprint_dates[1])
 
         for issue_id, issue_details in issues.items():
             for worklog_id, worklog_details in issue_details['worklogs'].items():
@@ -146,57 +166,7 @@ class JiraLogger:
                 if not worklog_details['author'] == self.params['username']:
                      del issue_details['worklogs'][worklog_id]
 
-    def __get_start_and_end_date_for_sprint(self):
-        sprint_dates = {
-            '1602.1': ['2016-01-13', '2016-01-26'],
-            '1602.2': ['2016-01-27', '2016-02-16'],
-            '1603.1': ['2016-02-17', '2016-03-01'],
-            '1603.2': ['2016-03-02', '2016-03-15'],
-            '1604.1': ['2016-03-16', '2016-04-05'],
-            '1604.2': ['2016-04-05', '2016-04-19'],
-            '1605.1': ['2016-04-20', '2016-05-03'],
-            '1605.2': ['2016-05-04', '2016-05-17'],
-            '1606.1': ['2016-05-18', '2016-05-31']
-        }.get(self.params['sprint_id'], None)
-
-        if sprint_dates is None:
-            raise RuntimeError('{} is not a proper sprint id.'.format(self.params['sprint_id']))
-
-        return sprint_dates
-
-    def __generate_date_list(self, start, end):
-        start = datetime.strptime(start, '%Y-%m-%d')
-        end = datetime.strptime(end, '%Y-%m-%d')
-        dates = []
-        for day in range(0, (end-start).days + 1):
-            date = start + timedelta(days=day)
-            if date.weekday() not in [5, 6] and date.strftime('%Y-%m-%d') not in helper.get_holidays_list().keys():
-                dates.append(date.strftime('%Y-%m-%d'))
-
-        return dates
-
-    def __get_params_from_config(self):
-        with open(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'config.json')) as data_file:
-            try:
-                data = json.load(data_file)
-            except ValueError:
-                raise RuntimeError("There was something wrong in your config.json.")
-
-        return data
-
-    def __get_sprint_id(self, sprint_details):
-        if sprint_details == None:
-            return 'No active sprint'
-
-        for sprint_detail in sprint_details:
-            sprint_detail = re.search('\[.*', str(sprint_detail)).group(0).split(',')
-            for index, item in enumerate(sprint_detail):
-                if item.startswith('state=ACTIVE'):
-                     return re.search('[\d\.]+', sprint_detail[index + 1]).group(0)
-
-        return 'No active sprint'
-
-    def log_work_for_sprint(self, file):
+    def log_work(self, file):
         print 'Logging work.'
 
         with open(file) as data_file:
@@ -211,10 +181,10 @@ class JiraLogger:
             if not isinstance(worklog, int):
                 raise RuntimeError('There was a problem logging your holidays.')
 
-    def __test_if_add_worklog_works(self):
-        worklog = self.jira.add_worklog('OMCPMNLOMG-24', '.75h', started=parser.parse('2016-04-26T08:00:00-00:00'), comment='JIRA')
+    def test_if_add_worklog_works(self):
+        worklog = self.jira.add_worklog('OMCPMNLOMG-24', '.75h', started=parser.parse('2016-05-12T08:00:00-00:00'), comment='JIRA')
         print worklog
 
         while not isinstance(worklog, int):
-            worklog = self.jira.add_worklog('OMCPMNLOMG-24', '.75h', started=parser.parse('2016-05-03T08:00:00-00:00'), comment='JIRA')
+            worklog = self.jira.add_worklog('OMCPMNLOMG-24', '.75h', started=parser.parse('2016-05-12T08:00:00-00:00'), comment='JIRA')
             print worklog

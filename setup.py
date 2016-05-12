@@ -19,9 +19,8 @@ def main():
             subprocess.call(shlex.split('sudo pip install --upgrade jira'))
             subprocess.call(shlex.split('sudo pip install --upgrade python-dateutil'))
         elif platform.system() == 'Windows':
-            pass
-            # pip.main(['install', '--upgrade', 'jira'])
-            # pip.main(['install', '--upgrade', 'python-dateutil'])
+            pip.main(['install', '--upgrade', 'jira'])
+            pip.main(['install', '--upgrade', 'python-dateutil'])
     finally:
         print 'Done.'
 
