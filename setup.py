@@ -4,10 +4,6 @@ import platform
 import pip
 import subprocess
 import shlex
-import sys
-import os
-sys.path.insert(0, os.path.abspath(__file__))
-from jirautomatic.libraries import timer
 
 def main():
     if platform.python_version() < '2.7':
@@ -26,11 +22,8 @@ def main():
             pass
             # pip.main(['install', '--upgrade', 'jira'])
             # pip.main(['install', '--upgrade', 'python-dateutil'])
-        print 'Done.'
     finally:
-        from jirautomatic import jira_main
-        with timer.Timer():
-            jira_main.JiraLogger(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
+        print 'Done.'
 
 if __name__ == '__main__':
     main()
