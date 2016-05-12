@@ -167,24 +167,25 @@ class JiraLogger:
                      del issue_details['worklogs'][worklog_id]
 
     def log_work(self, file):
-        print 'Logging work.'
+        print 'Logging work to JIRA.'
 
         with open(file) as data_file:
             try:
-                self.__generic_logger(json.load(data_file))
+                self.__generic_logger(json.load(data_file)['worklogs'])
             except ValueError:
-                raise RuntimeError("There was something wrong in your {}.json." + file)
+                raise RuntimeError("There was something wrong in {}".format(file))
 
     def __generic_logger(self, worklogs):
         for worklog in worklogs:
             worklog = self.jira.add_worklog(worklog['id'], worklog['timeSpent'], started=parser.parse(worklog['started'] + 'T08:00:00-00:00'), comment=worklog['comment'])
             if not isinstance(worklog, int):
-                raise RuntimeError('There was a problem logging your holidays.')
+                raise RuntimeError('There was a problem logging your worklog.')
 
     def test_if_add_worklog_works(self):
-        worklog = self.jira.add_worklog('OMCPMNLOMG-24', '.75h', started=parser.parse('2016-05-12T08:00:00-00:00'), comment='JIRA')
+        print 'Testing if add_worklog works.'
+        worklog = self.jira.add_worklog('OMCPMNLOMG-24', '.75h', started=parser.parse('{}T08:00:00-00:00'.format(datetime.today().strftime('%Y-%m-%d'))), comment='JIRA')
         print worklog
 
         while not isinstance(worklog, int):
-            worklog = self.jira.add_worklog('OMCPMNLOMG-24', '.75h', started=parser.parse('2016-05-12T08:00:00-00:00'), comment='JIRA')
+            worklog = self.jira.add_worklog('OMCPMNLOMG-24', '.75h', started=parser.parse('{}T08:00:00-00:00'.format(datetime.today().strftime('%Y-%m-%d'))), comment='JIRA')
             print worklog
