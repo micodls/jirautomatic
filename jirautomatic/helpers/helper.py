@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from datetime import datetime, timedelta
+
 def generate_date_list(start, end):
     start = datetime.strptime(start, '%Y-%m-%d')
     end = datetime.strptime(end, '%Y-%m-%d')

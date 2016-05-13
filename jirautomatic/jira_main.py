@@ -3,7 +3,7 @@ import requests
 import json
 import re
 import os
-from datetime import datetime, timedelta
+from datetime import datetime
 from jira import JIRA
 from jira.exceptions import JIRAError
 from dateutil import parser
